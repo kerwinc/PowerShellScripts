@@ -148,7 +148,7 @@ function Stop-WebApplicationPool {
       Stop-WebAppPool -Name $AppPoolName    
     }
 
-$waitCount = 10
+    $waitCount = 10
     do {
       $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
       Write-Verbose "Waiting for application pool ($AppPoolName) to stop"
@@ -281,7 +281,7 @@ function Backup-WebSite {
       Write-Verbose "There are currently no items to backup in $physicalPath"
       return
     }
-    $tempDirectory = "$BackupDirectory\Temp_$Site"+(Get-Date -Format "hhmmss")
+    $tempDirectory = "$BackupDirectory\Temp_$Site" + (Get-Date -Format "hhmmss")
     Write-Verbose "Copying files from $physicalPath to $BackupDirectory"
     Copy-Item -Path "$physicalPath" -Destination $tempDirectory -Recurse
 
