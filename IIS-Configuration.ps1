@@ -27,8 +27,10 @@ Import-Module ".\IIS-Configuration-Utils.psm1" -Force
 # Backup-WebSite -SiteName "Default Web Site\demo2" -BackupDirectory "c:\backup" -Verbose
 # Publish-WebSite -SiteName "Default Web Site\demo2" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose:$false
 
-New-WebSiteOrWebApplication -SiteName "ProjeXion" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\ProjeXion" -ApplicationPool "ProjeXion" -Force $true -Verbose
-Backup-WebSite -SiteName "ProjeXion" -BackupDirectory "c:\backup" -Verbose 
-Publish-WebSite -SiteName "ProjeXion" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
+# New-WebSiteOrWebApplication -SiteName "ProjeXion" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\ProjeXion" -ApplicationPool "ProjeXion" -Force $true -Verbose
+# Backup-WebSite -SiteName "ProjeXion" -BackupDirectory "c:\backup" -Verbose 
+# Publish-WebSite -SiteName "ProjeXion" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
 
 #New-WebSiteOrWebApplication -SiteName "ProjeXion\Help" -PhysicalPath "$env:systemdrive\inetpub\wwwroot\ProjeXion-Help" -ApplicationPool "ProjeXion.Help" -Force $true -Verbose
+
+ ExtractZipFile -Zipfilename "C:\Backup\ProjeXion_18-03-17_225919.zip" -Destination "C:\Backup\ProjeXion_18-03-17_225919"

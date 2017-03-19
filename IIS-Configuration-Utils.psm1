@@ -1,14 +1,23 @@
-function Test-StringIsEmpty ([string]$value) {
-  if ([System.String]::IsNullOrEmpty($value) -or [System.String]::IsNullOrWhiteSpace($value)) {
+function Test-AppPoolExists ([string]$Name) {
+  $siteAppPoolPath = "IIS:\AppPools\" + $Name
+  if ((Test-Path $siteAppPoolPath -pathType container)) {
     return $true
   }
-  return $false
+  else {
+    return $false
+  }
 }
 
 function ZipFiles($zipfilename, $sourcedir ) {
   Add-Type -Assembly System.IO.Compression.FileSystem
   $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
   [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename, $compressionLevel, $false)
+}
+
+function ExtractZipFile($Zipfilename, $Destination ) {
+  Add-Type -Assembly System.IO.Compression.FileSystem
+  $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+  [System.IO.Compression.ZipFile]::ExtractToDirectory($Zipfilename, $Destination)
 }
 
 function Test-SiteName ([string]$siteName) {
