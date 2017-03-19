@@ -140,18 +140,62 @@ function Stop-WebApplicationPool {
   Begin {
     $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
     if ($appPoolStatus -eq "Stopped") {
-      Write-Verbose "Application Pool () is already stopped"
+      Write-Verbose "Application Pool ($AppPoolName) is already stopped"
     }
   }
   Process {
     if ($appPoolStatus -ne "Stopped") {
       Stop-WebAppPool -Name $AppPoolName    
     }
+
+$waitCount = 10
+    do {
+      $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
+      Write-Verbose "Waiting for application pool ($AppPoolName) to stop"
+      Start-Sleep -Seconds 2
+      $waitCount = $waitCount - 1
+    }
+    until ((Get-WebAppPoolState -Name $AppPoolName).Value -eq "Stopped" -or $waitCount -lt 1)
   }
   End {
     $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
     if ($appPoolStatus -eq "Stopped") {
       Write-Verbose "Application Pool ($AppPoolName) stopped successfully"
+      return
+    }
+  }
+}
+
+function Start-WebApplicationPool {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$AppPoolName
+  )
+  Begin {
+    $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
+    if ($appPoolStatus -eq "Started") {
+      Write-Verbose "Application Pool ($AppPoolName) is already stopped"
+    }
+  }
+  Process {
+    if ($appPoolStatus -ne "Started") {
+      Start-WebAppPool -Name $AppPoolName    
+    }
+
+    $waitCount = 10
+    do {
+      $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
+      Write-Verbose "Waiting for application pool ($AppPoolName) to start"
+      Start-Sleep -Seconds 1
+      $waitCount = $waitCount - 1
+    }
+    until ((Get-WebAppPoolState -Name $AppPoolName).Value -eq "Started" -or $waitCount -lt 1)
+  }
+  End {
+    $appPoolStatus = (Get-WebAppPoolState -Name $AppPoolName).Value
+    if ($appPoolStatus -eq "Started") {
+      Write-Verbose "Application Pool ($AppPoolName) started successfully"
       return
     }
   }
@@ -239,6 +283,44 @@ function Backup-WebSite {
 
     if ((Test-Path -Path $zipFileFullPath) -and $Error.Count -eq 0) {
       Write-Host "Backup for $SiteName was created at $zipFileFullPath successfully!" -ForegroundColor Green
+    }
+  }
+}
+
+function Restore-WebSite {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-SiteName $_})]
+    [Parameter(Mandatory = $true)][string]$SiteName,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_})]
+    [Parameter(Mandatory = $true)][string]$BackupZipFile
+  )
+  Begin {
+    Write-Verbose "Getting application pool for $siteName"
+    $appPool = Get-SiteAppPool -SiteName $SiteName
+
+    Write-Verbose "Getting physical path for $siteName"
+    $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
+
+    Write-Verbose "Stopping application pool ($appPool) for $siteName"
+    Stop-WebApplicationPool -AppPoolName $appPool
+  }
+  Process {
+    #Clean out the site's physical path
+    Write-Verbose "Removing files from $physicalPath"
+    Remove-Item -Path "$physicalPath\*" -Recurse -Force
+
+    #Extract the zip file to webSite's Physical Directory
+    Write-Verbose "Extracting $BackupZipFile to $physicalPath"
+    ExtractZipFile -Zipfilename $BackupZipFile -Destination $physicalPath
+  }
+  End {
+    Start-WebApplicationPool -AppPoolName $appPool
+
+    if ($Error.Count -eq 0) {
+      Write-Host "$SiteName has been restored using $BackupZipFile successfully!" -ForegroundColor Green
     }
   }
 }
