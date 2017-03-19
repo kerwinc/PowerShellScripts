@@ -15,17 +15,17 @@ Import-Module ".\WebAdministrationExgtention.psm1" -Force
 # Write-Host "MyFancySite Physical Path:" -ForegroundColor Green
 # Get-SitePhysicalPath -SiteName "MyFancySite"
 
-# Write-Host "Deploying to MyFancySite..." -ForegroundColor Green
-# Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose
+Write-Host "Deploying to MyFancySite..." -ForegroundColor Green
+Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose
+Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose
 
-# Write-Host "Deploying to Demo..." -ForegroundColor Green
-# Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose
+Write-Host "Deploying to Demo..." -ForegroundColor Green
+Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
+Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose
 
-# Write-Host "Deploying to Demo2..." -ForegroundColor Green
-# Backup-WebSite -SiteName "Default Web Site\demo2" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "Default Web Site\demo2" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose:$false
+Write-Host "Deploying to Demo2..." -ForegroundColor Green
+Backup-WebSite -SiteName "Default Web Site\demo2" -BackupDirectory "c:\backup" -Verbose
+Publish-WebSite -SiteName "Default Web Site\demo2" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose:$false
 
 # New-WebSiteOrWebApplication -SiteName "MyFancySite" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite" -ApplicationPool "MyFancySite" -Force $true -Verbose
 # Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose 

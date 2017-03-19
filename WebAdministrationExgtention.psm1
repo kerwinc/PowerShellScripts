@@ -214,9 +214,18 @@ function Publish-WebSite {
   Begin {
     Write-Verbose "Getting application pool for $siteName"
     $appPool = Get-SiteAppPool -SiteName $SiteName
+    if ($appPool -eq $null -or !(Test-AppPoolExists -Name $appPool)) {
+      Throw "Application Pool ($appName) cannot be null and does not exist"
+    }
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
+    if ($physicalPath -eq $null) {
+      Throw "Physical Path cannot be null"
+    }
+    if (-not(Test-Path -Path $physicalPath -PathType Container)) {
+      Throw "Directory for Physical Path ($physicalPath) could not be found"
+    }
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
@@ -254,9 +263,15 @@ function Backup-WebSite {
     [Parameter(Mandatory = $true)][string]$BackupDirectory
   )
   Begin {
+    Write-Verbose "Resolving site name $siteName"
+    $site = Get-WebSiteName -SitePath $SiteName
+
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    $site = Get-WebSiteName -SitePath $SiteName
+    
+    if ($physicalPath -eq $null) {
+      throw "No physical path found for $SiteName. Please ensure that a valid site is provided."
+    }
 
     #Check if there any files to Backup
     $itemCount = Get-ChildItem $physicalPath -Recurse | Measure-Object | % {$_.Count}
@@ -266,15 +281,15 @@ function Backup-WebSite {
       Write-Verbose "There are currently no items to backup in $physicalPath"
       return
     }
-
+    $tempDirectory = "$BackupDirectory\Temp_$Site"+(Get-Date -Format "hhmmss")
     Write-Verbose "Copying files from $physicalPath to $BackupDirectory"
-    Copy-Item -Path "$physicalPath" -Destination "$BackupDirectory\Temp" -Recurse
+    Copy-Item -Path "$physicalPath" -Destination $tempDirectory -Recurse
 
     Write-Verbose "Creating Zip archive"
     $zipFileName = $site + "_" + (Get-Date -Format "dd-MM-yy_HHmmss") + ".zip"
     $zipFileFullPath = "$BackupDirectory\$zipFileName"
-    ZipFiles -sourcedir "$BackupDirectory\Temp" -zipfilename $zipFileFullPath
-    Remove-Item "$BackupDirectory\Temp" -Recurse -Force
+    ZipFiles -sourcedir $tempDirectory -zipfilename $zipFileFullPath
+    Remove-Item $tempDirectory -Recurse -Force
   }
   End {
     if ($itemCount -eq 0) {
