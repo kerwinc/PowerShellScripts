@@ -71,10 +71,6 @@ function Remove-DirectoryContents {
   )
   Process {
     if ((Test-DirectoryPath -Path $Path)) {
-      # $items = Get-ChildItem -Path $Path -Recurse -Force
-      # foreach ($item in $items) {
-      #   Write-Verbose "Removing $($item.FullName)"
-      # }
       Remove-Item -Path "$Path\*" -Recurse -WhatIf
       Remove-Item -Path "$Path\*" -Recurse -Force
     }

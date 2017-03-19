@@ -31,7 +31,10 @@ Import-Module ".\WebAdministrationExtensions.psm1" -Force
 # Backup-WebSite -SiteName "MyFancySite2" -BackupDirectory "c:\backup" -Verbose 
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
 
-#New-WebSiteOrWebApplication -SiteName "MyFancySite\Help" -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite-Help" -ApplicationPool "MyFancySite.Help" -Force $true -Verbose
+New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
+Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\demo_19-03-17_203447.zip" -Verbose
+
+# New-WebSiteOrWebApplication -SiteName "Default Web Site\Demo3" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Verbose
 
 #ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
 #Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_19-03-17_201807.zip" -Verbose

@@ -340,44 +340,57 @@ function Restore-WebSite {
   }
 }
 
-function New-WebSiteOrWebApplication {
+function New-IISWebSite {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (-not(Test-SiteExists -Name $_)) {$true} else {throw "Site already exists: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
-    [Parameter()][int]$Port,
+    [ValidateRange(80, 65535)]
+    [Parameter(Mandatory = $true)][int]$Port,
     [ValidateNotNullOrEmpty()]
     [Parameter()][string]$HostHeader,
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
     [Parameter(Mandatory = $true)][string]$PhysicalPath,
     [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory = $true)][string]$ApplicationPool
+    [Parameter(Mandatory = $true)][string]$ApplicationPool,
+    [Parameter()][Switch]$Force = $false
   )
   Begin {
-    if (-not(Test-DirectoryPath -Path $PhysicalPath)) {
-      Write-Verbose "Invalid physical path ($PhysicalPath). Please provide a valid directory path"
+    if (-not(Test-DirectoryPath -Path $PhysicalPath) -and $Force) {
+      if ($Force) {
+        Write-Verbose "Creating physical path ($PhysicalPath)"
+        New-Directory -Path $PhysicalPath
+      }
+      else {
+        throw "Physical Path ($PhysicalPath) does not exist. Provide -Force to let us create the directory for you"
+      }
     }
   }
   Process {
     #Create the Application Pool If It Does Not Exist
-    if (!(Test-AppPoolExists -Name ApplicationPool)) {
-      New-WebAppPool $ApplicationPool
+    if (-not(Test-AppPoolExists -Name ApplicationPool)) {
+      if ($Force) {
+        Write-Verbose "Creating application pool: $ApplicationPool"
+        New-WebAppPool $ApplicationPool
+      }
+      else {
+        throw "Application pool does not exist. Provide -Force to let us create the application pool for you"
+      }
     }
-
-    if ($SiteName.Contains("\")) {
-      Write-Verbose "Resolving Website and Web Application Names"
-      $siteNameArray = $SiteName.Split("\")
-      $rootSiteName = $siteNameArray[0]
-      $webAppName = $siteNameArray[1]
+    # if ($SiteName.Contains("\")) {
+    #   Write-Verbose "Resolving Website and Web Application Names"
+    #   $siteNameArray = $SiteName.Split("\")
+    #   $rootSiteName = $siteNameArray[0]
+    #   $webAppName = $siteNameArray[1]
       
-      Write-Verbose "Creating web application $webAppName under $rootSiteName"
-      New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    }
-    else {
-      Write-Verbose "Creating website $siteName on port $Port"
-      New-WebSite -Name $SiteName -Port $Port -HostHeader $HostHeader -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    }
+    #   Write-Verbose "Creating web application $webAppName under $rootSiteName"
+    #   New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
+    # }
+    # else {
+    Write-Verbose "Creating website $siteName on port $Port"
+    New-WebSite -Name $SiteName -Port $Port -HostHeader $HostHeader -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
+    # }
   }
 }
