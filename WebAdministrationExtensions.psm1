@@ -1,129 +1,4 @@
-function Test-AppPoolExists ([string]$Name) {
-  $siteAppPoolPath = "IIS:\AppPools\" + $Name
-  if ((Test-Path $siteAppPoolPath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
-  }
-}
-
-function Test-SiteExists ([string]$Name) {
-  $sitePath = "IIS:\Sites\" + $Name
-  if ((Test-Path $sitePath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
-  }
-}
-
-function ZipFiles($zipfilename, $sourcedir ) {
-  Add-Type -Assembly System.IO.Compression.FileSystem
-  $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
-  [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename, $compressionLevel, $false)
-}
-
-function ExtractZipFile($Zipfilename, $Destination ) {
-  Add-Type -Assembly System.IO.Compression.FileSystem
-  $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
-  [System.IO.Compression.ZipFile]::ExtractToDirectory($Zipfilename, $Destination)
-}
-
-function Test-SiteName ([string]$siteName) {
-  if ([System.String]::IsNullOrEmpty($siteName) -or [System.String]::IsNullOrWhiteSpace($siteName)) {
-    throw "Site Name is required and cannot be empty"
-  }
-
-  #Validate that the site name does not go 2 or more levels deep
-  if ($siteName.Split("\").Count -gt 2) {
-    throw "Invalid site name. Nested IIS Web Applications should be limited to 1 level"
-  }
-  return $true
-}
-
-Function Test-DirectoryPath {
-  [CmdletBinding()]
-  param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory = $true)][string]$Path
-  )
-  Process {
-    if ($physicalPath -eq $null) {
-      return $false
-    }
-    if ([System.String]::IsNullOrEmpty($Path) -or [System.String]::IsNullOrWhiteSpace($Path)) {
-      return $false
-    }
-    if (-not(Test-Path -Path $Path -PathType Container)) {
-      return $false
-    }
-    if ($Path.StartsWith("\") -or $path.StartsWith("*")) {
-      return $false
-    }
-    return $true
-  }
-}
-
-function Remove-Directory {
-  [CmdletBinding()]
-  param(
-    [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
-    [Parameter(Mandatory = $true)][string]$Path
-  )
-  Process {
-    Write-Verbose "Removing Directory: $path"
-    Remove-Item $Path -Recurse -Force
-  }
-}
-
-function Remove-DirectoryContents {
-  [CmdletBinding()]
-  param(
-    [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
-    [Parameter(Mandatory = $true)][string]$Path
-  )
-  Process {
-    if ((Test-DirectoryPath -Path $Path)) {
-      $items = Get-ChildItem -Path $Path -Recurse -Force
-      foreach ($item in $items) {
-        Write-Verbose "Removing $($item.FullName)"
-      }
-
-      Remove-Item -Path "$Path\*" -Recurse -Force
-    }
-    else {
-      throw "Directry Path is invalid: $path"
-      exit
-    }
-  }
-}
-
-function Set-SitePhysicalPath {
-  [CmdletBinding()]
-  param(
-    [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-SiteName $_})]
-    [Parameter(Mandatory = $true)][string]$SiteName,
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory = $true)][string]$NewPhysicalPath
-  )
-
-  $siteIISPath = "IIS:\Sites\" + $SiteName
-
-  #check if the site exists
-  if (!(Test-Path $siteIISPath -pathType container)) {
-    Write-Host "Site does not exist in IIS: "$appName -foregroundcolor "red"
-    return
-  }
-
-  Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
-
-  $site = Get-Website -Name $appName
-  Write-Host "Physical path for "$site.name" changed to" $site.physicalPath  -foregroundcolor "green"
-}
+Import-Module ".\IO.File.Extentions.psm1" -Force
 
 function Get-WebApplicationFromSiteName {
   [CmdletBinding()]
@@ -167,6 +42,7 @@ function Get-SiteAppPool {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName
   )
   Process {
@@ -186,6 +62,7 @@ function Get-SitePhysicalPath {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName
   )
   Process {
@@ -198,6 +75,62 @@ function Get-SitePhysicalPath {
       return $site.PhysicalPath
     }
   }
+}
+
+function Test-AppPoolExists ([string]$Name) {
+  $siteAppPoolPath = "IIS:\AppPools\" + $Name
+  if ((Test-Path $siteAppPoolPath -pathType container)) {
+    return $true
+  }
+  else {
+    return $false
+  }
+}
+
+function Test-SiteExists ([string]$Name) {
+  $sitePath = "IIS:\Sites\" + $Name
+  if ((Test-Path $sitePath -pathType container)) {
+    return $true
+  }
+  else {
+    return $false
+  }
+}
+
+function Test-SiteName ([string]$siteName) {
+  if ([System.String]::IsNullOrEmpty($siteName) -or [System.String]::IsNullOrWhiteSpace($siteName)) {
+    throw "Site Name is required and cannot be empty"
+  }
+
+  #Validate that the site name does not go 2 or more levels deep
+  if ($siteName.Split("\").Count -gt 2) {
+    throw "Invalid site name. Nested IIS Web Applications should be limited to 1 level"
+  }
+  return $true
+}
+
+function Set-SitePhysicalPath {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-SiteName $_})]
+    [Parameter(Mandatory = $true)][string]$SiteName,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$NewPhysicalPath
+  )
+
+  $siteIISPath = "IIS:\Sites\" + $SiteName
+
+  #check if the site exists
+  if (!(Test-Path $siteIISPath -pathType container)) {
+    Write-Host "Site does not exist in IIS: "$appName -foregroundcolor "red"
+    return
+  }
+
+  Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
+
+  $site = Get-Website -Name $appName
+  Write-Host "Physical path for "$site.name" changed to" $site.physicalPath  -foregroundcolor "green"
 }
 
 function Stop-WebApplicationPool {
@@ -275,6 +208,7 @@ function Publish-WebSite {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-Path -Path $_})]
@@ -297,7 +231,7 @@ function Publish-WebSite {
   Process {
     #Clean out the site's physical path
     Write-Verbose "Removing files from $physicalPath"
-    Remove-Item -Path "$physicalPath\*" -Recurse -Force
+    Remove-DirectoryContents -Path $physicalPath -Verbose:$VerbosePreference
 
     #Copy Source files to WebSite's Physical Directory
     Write-Verbose "Copying files from $SourceApplicationDirectoryPath to $physicalPath"
@@ -321,6 +255,7 @@ function Backup-WebSite {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-Path -Path $_})]
@@ -329,24 +264,20 @@ function Backup-WebSite {
   Begin {
     Write-Verbose "Resolving site name $siteName"
     $site = Get-WebSiteName -SitePath $SiteName
+    if ($site -eq $null) {throw "Could not resolve website or web application name for $siteName"}
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    if ($physicalPath -eq $null) {
-      throw "Physical Path for site cannot be null"
-    }
 
-    #Check if there any files to Backup
-    $itemCount = Get-ChildItem $physicalPath -Recurse | Measure-Object | % {$_.Count}
+    #Validate the Physical Path
+    if ($physicalPath -eq $null) { throw "Physical Path for site ($siteName) cannot be null" }
+    if (-not(Test-DirectoryPath -Path $physicalPath)) { throw "Invalid directory path: $physicalPath"}
   }
   Process {
-
-    if (-not(Test-DirectoryPath -Path $physicalPath)) {
-      throw "Invalid directory path: $physicalPath"
-    }
-
+    #Check if there any files to Backup
+    $itemCount = Get-ChildItem $physicalPath -Recurse | Measure-Object | % {$_.Count}
     if ($itemCount -eq 0) {
-      Write-Verbose "There are currently no items to backup in $physicalPath"
+      Write-Warning "There are currently no items to backup in $physicalPath"
       return
     }
   
@@ -356,9 +287,7 @@ function Backup-WebSite {
     ZipFiles -sourcedir $physicalPath -zipfilename $zipFileFullPath
   }
   End {
-    if ($itemCount -eq 0) {
-      return
-    }
+    if ($itemCount -eq 0) {return}
 
     if ((Test-Path -Path $zipFileFullPath) -and $Error.Count -eq 0) {
       Write-Host "Backup for $SiteName was created at $zipFileFullPath successfully!" -ForegroundColor Green
@@ -371,6 +300,7 @@ function Restore-WebSite {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-Path -Path $_})]
@@ -379,15 +309,15 @@ function Restore-WebSite {
   Begin {
     Write-Verbose "Getting application pool for $siteName"
     $appPool = Get-SiteAppPool -SiteName $SiteName
-    if ($appPool -eq $null) {
-      throw "Application Pool for site $siteName cannot be null"
-    }
+    if ($appPool -eq $null) { throw "Application Pool for site $siteName cannot be null"}
+    if (!(Test-AppPoolExists -Name $appPool)) {throw "Application Pool for site $siteName does not exist"}
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    if ($physicalPath -eq $null) {
-      throw "Physical Path for site cannot be null"
-    }
+
+    #Validate the Physical Path
+    if ($physicalPath -eq $null) { throw "Physical Path for site ($siteName) cannot be null" }
+    if (-not(Test-DirectoryPath -Path $physicalPath)) { throw "Invalid directory path: $physicalPath"}
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
@@ -420,28 +350,20 @@ function New-WebSiteOrWebApplication {
     [ValidateNotNullOrEmpty()]
     [Parameter()][string]$HostHeader,
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
     [Parameter(Mandatory = $true)][string]$PhysicalPath,
-    [Parameter(Mandatory = $true)][string]$ApplicationPool,
-    [Parameter()][switch]$Force = $false
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$ApplicationPool
   )
   Begin {
-
-    if (-not (Test-Path -Path $PhysicalPath -PathType Container) -and $Force) {
-      Write-Verbose "$PhysicalPath does not exist and will be created"
-      New-Item -ItemType Directory -Path $PhysicalPath -Force
+    if (-not(Test-DirectoryPath -Path $PhysicalPath)) {
+      Write-Verbose "Invalid physical path ($PhysicalPath). Please provide a valid directory path"
     }
   }
   Process {
     #Create the Application Pool If It Does Not Exist
-    $siteAppPoolPath = "IIS:\AppPools\" + $ApplicationPool
-    if (!(Test-Path $siteAppPoolPath -pathType container)) {
-      if ($Force) {
-        #create the app pool
-        New-WebAppPool $ApplicationPool
-      }
-      else {
-        throw "Application pool '$ApplicationPool' does not exist. Create the application pool or set -Force"
-      }
+    if (!(Test-AppPoolExists -Name ApplicationPool)) {
+      New-WebAppPool $ApplicationPool
     }
 
     if ($SiteName.Contains("\")) {
