@@ -1,5 +1,5 @@
 Import-module WebAdministration
-Import-Module ".\IIS-Configuration-Utils.psm1" -Force
+Import-Module ".\WebAdministrationExgtention.psm1" -Force
 
 # Get-SiteAppPool -SiteName "demo\demo\demo"
 
