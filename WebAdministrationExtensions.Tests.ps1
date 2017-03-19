@@ -1,6 +1,8 @@
 Import-module WebAdministration
 Import-Module ".\WebAdministrationExtensions.psm1" -Force
 
+# $ErrorActionPreference = "Stop"
+
 # Get-SiteAppPool -SiteName "demo\demo\demo"
 
 # Write-Host "Default Web Site:" -ForegroundColor Green
@@ -28,10 +30,13 @@ Import-Module ".\WebAdministrationExtensions.psm1" -Force
 # Publish-WebSite -SiteName "Default Web Site\demo2" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose:$false
 
 # New-WebSiteOrWebApplication -SiteName "MyFancySite" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite" -ApplicationPool "MyFancySite" -Force $true -Verbose
-# Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose 
+# Backup-WebSite -SiteName "MyFancySite2" -BackupDirectory "c:\backup" -Verbose 
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
 
 #New-WebSiteOrWebApplication -SiteName "MyFancySite\Help" -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite-Help" -ApplicationPool "MyFancySite.Help" -Force $true -Verbose
 
 #ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
-#Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_18-03-17_230739.zip" -Verbose
+#Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\MyFancySite2_19-03-17_141825.zip" -Verbose
+
+# Test-SiteExists -Name "MyFancySite"
+# Test-SiteExists -Name "Default Web Site\demo"

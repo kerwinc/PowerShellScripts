@@ -8,6 +8,16 @@ function Test-AppPoolExists ([string]$Name) {
   }
 }
 
+function Test-SiteExists ([string]$Name) {
+  $sitePath = "IIS:\Sites\" + $Name
+  if ((Test-Path $sitePath -pathType container)) {
+    return $true
+  }
+  else {
+    return $false
+  }
+}
+
 function ZipFiles($zipfilename, $sourcedir ) {
   Add-Type -Assembly System.IO.Compression.FileSystem
   $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
@@ -30,6 +40,65 @@ function Test-SiteName ([string]$siteName) {
     throw "Invalid site name. Nested IIS Web Applications should be limited to 1 level"
   }
   return $true
+}
+
+Function Test-DirectoryPath {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Path
+  )
+  Process {
+    if ($physicalPath -eq $null) {
+      return $false
+    }
+    if ([System.String]::IsNullOrEmpty($Path) -or [System.String]::IsNullOrWhiteSpace($Path)) {
+      return $false
+    }
+    if (-not(Test-Path -Path $Path -PathType Container)) {
+      return $false
+    }
+    if ($Path.StartsWith("\") -or $path.StartsWith("*")) {
+      return $false
+    }
+    return $true
+  }
+}
+
+function Remove-Directory {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
+    [Parameter(Mandatory = $true)][string]$Path
+  )
+  Process {
+    Write-Verbose "Removing Directory: $path"
+    Remove-Item $Path -Recurse -Force
+  }
+}
+
+function Remove-DirectoryContents {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
+    [Parameter(Mandatory = $true)][string]$Path
+  )
+  Process {
+    if ((Test-DirectoryPath -Path $Path)) {
+      $items = Get-ChildItem -Path $Path -Recurse -Force
+      foreach ($item in $items) {
+        Write-Verbose "Removing $($item.FullName)"
+      }
+
+      Remove-Item -Path "$Path\*" -Recurse -Force
+    }
+    else {
+      throw "Directry Path is invalid: $path"
+      exit
+    }
+  }
 }
 
 function Set-SitePhysicalPath {
@@ -220,12 +289,7 @@ function Publish-WebSite {
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    if ($physicalPath -eq $null) {
-      Throw "Physical Path cannot be null"
-    }
-    if (-not(Test-Path -Path $physicalPath -PathType Container)) {
-      Throw "Directory for Physical Path ($physicalPath) could not be found"
-    }
+    Test-DirectoryPath -Path $physicalPath
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
@@ -268,28 +332,28 @@ function Backup-WebSite {
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    
     if ($physicalPath -eq $null) {
-      throw "No physical path found for $SiteName. Please ensure that a valid site is provided."
+      throw "Physical Path for site cannot be null"
     }
 
     #Check if there any files to Backup
     $itemCount = Get-ChildItem $physicalPath -Recurse | Measure-Object | % {$_.Count}
   }
   Process {
+
+    if (-not(Test-DirectoryPath -Path $physicalPath)) {
+      throw "Invalid directory path: $physicalPath"
+    }
+
     if ($itemCount -eq 0) {
       Write-Verbose "There are currently no items to backup in $physicalPath"
       return
     }
-    $tempDirectory = "$BackupDirectory\Temp_$Site" + (Get-Date -Format "hhmmss")
-    Write-Verbose "Copying files from $physicalPath to $BackupDirectory"
-    Copy-Item -Path "$physicalPath" -Destination $tempDirectory -Recurse
-
+  
     Write-Verbose "Creating Zip archive"
     $zipFileName = $site + "_" + (Get-Date -Format "dd-MM-yy_HHmmss") + ".zip"
     $zipFileFullPath = "$BackupDirectory\$zipFileName"
-    ZipFiles -sourcedir $tempDirectory -zipfilename $zipFileFullPath
-    Remove-Item $tempDirectory -Recurse -Force
+    ZipFiles -sourcedir $physicalPath -zipfilename $zipFileFullPath
   }
   End {
     if ($itemCount -eq 0) {
@@ -315,9 +379,15 @@ function Restore-WebSite {
   Begin {
     Write-Verbose "Getting application pool for $siteName"
     $appPool = Get-SiteAppPool -SiteName $SiteName
+    if ($appPool -eq $null) {
+      throw "Application Pool for site $siteName cannot be null"
+    }
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
+    if ($physicalPath -eq $null) {
+      throw "Physical Path for site cannot be null"
+    }
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
@@ -325,7 +395,7 @@ function Restore-WebSite {
   Process {
     #Clean out the site's physical path
     Write-Verbose "Removing files from $physicalPath"
-    Remove-Item -Path "$physicalPath\*" -Recurse -Force
+    Remove-DirectoryContents -Path $physicalPath
 
     #Extract the zip file to webSite's Physical Directory
     Write-Verbose "Extracting $BackupZipFile to $physicalPath"
@@ -352,7 +422,7 @@ function New-WebSiteOrWebApplication {
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$PhysicalPath,
     [Parameter(Mandatory = $true)][string]$ApplicationPool,
-    [Parameter()][bool]$Force = $false
+    [Parameter()][switch]$Force = $false
   )
   Begin {
 
