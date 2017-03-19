@@ -1,5 +1,5 @@
 Import-module WebAdministration
-Import-Module ".\PowerShellScripts\IIS-Configuration-Utils.psm1" -Force
+Import-Module ".\IIS-Configuration-Utils.psm1" -Force
 
 # Get-SiteAppPool -SiteName "demo\demo\demo"
 
@@ -34,6 +34,4 @@ Import-Module ".\PowerShellScripts\IIS-Configuration-Utils.psm1" -Force
 #New-WebSiteOrWebApplication -SiteName "ProjeXion\Help" -PhysicalPath "$env:systemdrive\inetpub\wwwroot\ProjeXion-Help" -ApplicationPool "ProjeXion.Help" -Force $true -Verbose
 
 #ExtractZipFile -Zipfilename "C:\Backup\ProjeXion_18-03-17_225919.zip" -Destination "C:\Backup\ProjeXion_18-03-17_225919"
-
-Restore-WebSite -SiteName "ProjeXion" -BackupZipFile "C:\Backup\demo2_18-03-17_212136.zip" -Verbose
-Restore-WebSite -SiteName "ProjeXion" -BackupZipFile "C:\Backup\ProjeXion_18-03-17_230739.zip" -Verbose
+#Restore-WebSite -SiteName "ProjeXion" -BackupZipFile "C:\Backup\ProjeXion_18-03-17_230739.zip" -Verbose
