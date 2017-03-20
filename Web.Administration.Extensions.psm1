@@ -1,4 +1,4 @@
-Import-Module ".\IO.File.Extentions.psm1" -Force
+Import-Module ".\File.Extentions.psm1" -Force
 
 function Get-WebApplicationFromSiteName {
   [CmdletBinding()]
