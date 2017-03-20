@@ -1,6 +1,9 @@
 Import-module WebAdministration
 Import-Module ".\Web.Administration.Extensions.psm1" -Force
 Import-Module ".\XmlTransform.Extensions.psm1" -Force
+
+$ErrorActionPreference="Stop"
+
 # $ErrorActionPreference = "Stop"
 
 # Write-Host "Default Web Site:" -ForegroundColor Green
@@ -48,5 +51,5 @@ Import-Module ".\XmlTransform.Extensions.psm1" -Force
 
 # Set-SitePhysicalPath -SiteName "MyFancySite2" -NewPhysicalPath "C:\inetpub\wwwroot\MyFancySite"
 
-# Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -DestinationPath "C:\Backup\Web.New.config" -Verbose
+#  Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -DestinationPath "C:\Backup\Web.Error.config" -Verbose
 # Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -Verbose
