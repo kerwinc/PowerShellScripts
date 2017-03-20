@@ -1,5 +1,5 @@
 Import-module WebAdministration
-Import-Module ".\WebAdministrationExtensions.psm1" -Force
+Import-Module ".\Web.Administration.Extensions.psm1" -Force
 
 # $ErrorActionPreference = "Stop"
 
@@ -23,16 +23,16 @@ Import-Module ".\WebAdministrationExtensions.psm1" -Force
 # Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
 # Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
-# Write-Host "Deploying to Demo2..." -ForegroundColor Green
-# Backup-WebSite -SiteName "Default Web Site\demo2" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "Default Web Site\demo2" -SourceApplicationDirectoryPath "C:\ReleaseInProgress" -Verbose:$false
+# Write-Host "Deploying to Demo..." -ForegroundColor Green
+# Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
+# Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # New-WebSiteOrWebApplication -SiteName "MyFancySite" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite" -ApplicationPool "MyFancySite" -Force $true -Verbose
 # Backup-WebSite -SiteName "MyFancySite2" -BackupDirectory "c:\backup" -Verbose 
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
 
-New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
-Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\demo_19-03-17_203447.zip" -Verbose
+# New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
+# Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\demo_19-03-17_203447.zip" -Verbose
 
 # New-WebSiteOrWebApplication -SiteName "Default Web Site\Demo3" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Verbose
 

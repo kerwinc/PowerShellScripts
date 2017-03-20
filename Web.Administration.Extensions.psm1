@@ -235,7 +235,7 @@ function Publish-WebSite {
 
     #Copy Source files to WebSite's Physical Directory
     Write-Verbose "Copying files from $SourceApplicationDirectoryPath to $physicalPath"
-    Copy-Item -Path "$SourceApplicationDirectoryPath\*" -Destination $physicalPath -Recurse
+    Get-ChildItem -LiteralPath $SourceApplicationDirectoryPath | Copy-Item -Destination $physicalPath -Recurse
   }
   End {
     Write-Verbose "Starting application pool ($appPool) for $siteName"
