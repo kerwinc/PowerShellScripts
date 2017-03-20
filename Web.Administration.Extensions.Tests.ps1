@@ -48,4 +48,5 @@ Import-Module ".\XmlTransform.Extensions.psm1" -Force
 
 # Set-SitePhysicalPath -SiteName "MyFancySite2" -NewPhysicalPath "C:\inetpub\wwwroot\MyFancySite"
 
+# Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -DestinationPath "C:\Backup\Web.New.config" -Verbose
 # Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -Verbose

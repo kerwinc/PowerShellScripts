@@ -6,9 +6,18 @@ function Invoke-XmlTransform {
     [Parameter(Mandatory = $true)][string]$XmlFilePath,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Leaf )})]
-    [Parameter(Mandatory = $true)][string]$XdtFilePath
+    [Parameter(Mandatory = $true)][string]$XdtFilePath,
+    [ValidateNotNullOrEmpty()]
+    [Parameter()][string]$DestinationPath
   )
   Process {
+
+    #Set the destination file path to the source file path if its empty. This allows the option to update the existing config or create a new one.
+    if ([System.String]::IsNullOrEmpty($DestinationPath) -or [System.String]::IsNullOrWhiteSpace($DestinationPath)) {
+      $DestinationPath = $XmlFilePath
+    }
+
+    #Todo: Add a function to resolve the location of the dll 
     $transformTypePath = "$PSScriptRoot\Lib\Microsoft.Web.XmlTransform.dll"
     Write-Verbose "Loading Microsoft.Web.XmlTransform.dll from $transformTypePath"
     Add-Type -LiteralPath $transformTypePath
@@ -27,7 +36,7 @@ function Invoke-XmlTransform {
     }
 
     Write-Verbose "Saving transformed XML to $XmlFilePath"
-    $xmldoc.Save($XmlFilePath)
+    $xmldoc.Save($DestinationPath)
     Write-Host "Transform completed successfully!" -ForegroundColor Green
   }
 }
