@@ -34,7 +34,7 @@ function Test-FilePath {
     if ([System.String]::IsNullOrEmpty($Path) -or [System.String]::IsNullOrWhiteSpace($Path)) {
       return $false
     }
-    if (-not(Test-Path -LiteralPath $Path -PathType File)) {
+    if (-not(Test-Path -LiteralPath $Path -PathType Leaf)) {
       return $false
     }
     if ($Path.StartsWith("\") -or $path.StartsWith("*")) {
@@ -48,6 +48,7 @@ function ZipFiles {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType File)})]
     [Parameter(Mandatory = $true)][string]$Zipfilename,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
@@ -56,6 +57,8 @@ function ZipFiles {
   Process {
     Add-Type -Assembly System.IO.Compression.FileSystem
     $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+
+    Write-Verbose "Creating archive from $SourceDirectory to $Zipfilename"
     [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDirectory, $Zipfilename, $compressionLevel, $false)
   }
 }
@@ -64,14 +67,18 @@ function ExtractZipFile {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType File)})]
     [Parameter(Mandatory = $true)][string]$Zipfilename,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
     [Parameter(Mandatory = $true)][string]$Destination
   )
   Process {
+    Write-Verbose "Adding Assembly Type"
     Add-Type -Assembly System.IO.Compression.FileSystem
     $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+
+    Write-Verbose "Extracting $Zipfilename to $Destination"
     [System.IO.Compression.ZipFile]::ExtractToDirectory($Zipfilename, $Destination)
   }
 }
