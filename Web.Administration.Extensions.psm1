@@ -77,23 +77,27 @@ function Get-SitePhysicalPath {
   }
 }
 
-function Test-AppPoolExists ([string]$Name) {
-  $siteAppPoolPath = "IIS:\AppPools\" + $Name
-  if ((Test-Path $siteAppPoolPath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
+function Test-AppPoolExists {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  Process {
+    $siteAppPoolPath = "IIS:\AppPools\" + $Name
+    return (Test-Path $siteAppPoolPath -pathType container)
   }
 }
 
-function Test-SiteExists ([string]$Name) {
-  $sitePath = "IIS:\Sites\" + $Name
-  if ((Test-Path $sitePath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
+function Test-SiteExists {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  Process {
+    $sitePath = "IIS:\Sites\" + $Name
+    return (Test-Path $sitePath -pathType container)
   }
 }
 
@@ -114,29 +118,30 @@ function Set-SitePhysicalPath {
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$NewPhysicalPath
   )
+  Process {
+    #check if the site exists - This is happening twice but its OK for now
+    $siteIISPath = "IIS:\Sites\" + $SiteName
+    if (-not(Test-Path $siteIISPath -pathType container)) {
+      throw "Site does not exist in IIS: $SiteName"
+    }
 
-  $siteIISPath = "IIS:\Sites\" + $SiteName
+    Write-Verbose "Setting property PhysicalPath on $siteName to $NewPhysicalPath"
+    Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
 
-  #check if the site exists
-  if (!(Test-Path $siteIISPath -pathType container)) {
-    Write-Host "Site does not exist in IIS: "$appName -foregroundcolor "red"
-    return
+    Write-Host "Physical path for $SiteName changed to $NewPhysicalPath"  -foregroundcolor Green
   }
-
-  Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
-
-  $site = Get-Website -Name $appName
-  Write-Host "Physical path for "$site.name" changed to" $site.physicalPath  -foregroundcolor "green"
 }
 
 function Stop-WebApplicationPool {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (Test-AppPoolExists -Name $_) {$true} else {throw "Application Pool does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$AppPoolName
   )
   Begin {
@@ -172,6 +177,7 @@ function Start-WebApplicationPool {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (Test-AppPoolExists -Name $_) {$true} else {throw "Application Pool does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$AppPoolName
   )
   Begin {
@@ -223,7 +229,10 @@ function Publish-WebSite {
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    Test-DirectoryPath -Path $physicalPath
+
+    #Validate the Physical Path
+    if ($physicalPath -eq $null) { throw "Physical Path for site ($siteName) cannot be null" }
+    if (-not(Test-DirectoryPath -Path $physicalPath)) { throw "Invalid directory path: $physicalPath"}
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
@@ -284,7 +293,7 @@ function Backup-WebSite {
     Write-Verbose "Creating Zip archive"
     $zipFileName = $site + "_" + (Get-Date -Format "dd-MM-yy_HHmmss") + ".zip"
     $zipFileFullPath = "$BackupDirectory\$zipFileName"
-    ZipFiles -sourcedir $physicalPath -zipfilename $zipFileFullPath
+    ZipFiles -SourceDirectory $physicalPath -Zipfilename $zipFileFullPath
   }
   End {
     if ($itemCount -eq 0) {return}
@@ -394,3 +403,15 @@ function New-IISWebSite {
     # }
   }
 }
+
+Export-ModuleMember -Function New-IISWebSite,
+Get-SiteAppPool,
+Get-SitePhysicalPath,
+Set-SitePhysicalPath,
+Start-WebApplicationPool,
+Stop-WebApplicationPool,
+Backup-WebSite,
+Publish-WebSite,
+Restore-WebSite,
+Test-AppPoolExists,
+Test-SiteExists

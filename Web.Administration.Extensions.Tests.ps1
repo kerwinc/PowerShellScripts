@@ -20,24 +20,30 @@ Import-Module ".\Web.Administration.Extensions.psm1" -Force
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\web" -Verbose
 
 # Write-Host "Deploying to Demo..." -ForegroundColor Green
+# Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\" -Verbose
 # Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
 # Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # Write-Host "Deploying to Demo..." -ForegroundColor Green
-# Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
+# Backup-WebSite -SiteName "DontExist" -BackupDirectory "c:\backup" -Verbose
+# Publish-WebSite -SiteName "DontExist" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # New-WebSiteOrWebApplication -SiteName "MyFancySite" -Port 8081 -PhysicalPath "$env:systemdrive\inetpub\wwwroot\MyFancySite" -ApplicationPool "MyFancySite" -Force $true -Verbose
-# Backup-WebSite -SiteName "MyFancySite2" -BackupDirectory "c:\backup" -Verbose 
-# Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\ReleaseInProgress\Web" -Verbose
+# Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose 
+# Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
 # Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\demo_19-03-17_203447.zip" -Verbose
 
 # New-WebSiteOrWebApplication -SiteName "Default Web Site\Demo3" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Verbose
 
-#ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
-#Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_19-03-17_201807.zip" -Verbose
+# ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
+# Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_20-03-17_181053.zip" -Verbose
 
 # Test-SiteExists -Name "MyFancySite"
 # Test-SiteExists -Name "Default Web Site\demo"
+
+# Stop-WebApplicationPool -AppPoolName "MyFancySite" -Verbose
+# Start-WebApplicationPool -AppPoolName "MyFancySite" -Verbose
+
+# Set-SitePhysicalPath -SiteName "MyFancySite2" -NewPhysicalPath "C:\inetpub\wwwroot\MyFancySite"

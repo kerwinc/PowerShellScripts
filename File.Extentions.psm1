@@ -34,7 +34,7 @@ function Test-FilePath {
     if ([System.String]::IsNullOrEmpty($Path) -or [System.String]::IsNullOrWhiteSpace($Path)) {
       return $false
     }
-    if (-not(Test-Path -Path $Path -PathType File)) {
+    if (-not(Test-Path -LiteralPath $Path -PathType File)) {
       return $false
     }
     if ($Path.StartsWith("\") -or $path.StartsWith("*")) {
@@ -44,16 +44,36 @@ function Test-FilePath {
   }
 }
 
-function ZipFiles($zipfilename, $sourcedir ) {
-  Add-Type -Assembly System.IO.Compression.FileSystem
-  $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
-  [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename, $compressionLevel, $false)
+function ZipFiles {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Zipfilename,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$SourceDirectory
+  )
+  Process {
+    Add-Type -Assembly System.IO.Compression.FileSystem
+    $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDirectory, $Zipfilename, $compressionLevel, $false)
+  }
 }
 
-function ExtractZipFile($Zipfilename, $Destination ) {
-  Add-Type -Assembly System.IO.Compression.FileSystem
-  $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
-  [System.IO.Compression.ZipFile]::ExtractToDirectory($Zipfilename, $Destination)
+function ExtractZipFile {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Zipfilename,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$Destination
+  )
+  Process {
+    Add-Type -Assembly System.IO.Compression.FileSystem
+    $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($Zipfilename, $Destination)
+  }
 }
 
 function New-Directory {
@@ -81,7 +101,7 @@ function Remove-Directory {
   )
   Process {
     Write-Verbose "Removing Directory: $path"
-    Remove-Item -LiteralPath $Path -Recurse -Force -WhatIf
+    Remove-Item -LiteralPath $Path -Recurse -Force
   }
 }
 
@@ -94,7 +114,6 @@ function Remove-DirectoryContents {
   )
   Process {
     if ((Test-DirectoryPath -Path $Path)) {
-
       Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force -WhatIf
       Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force
     }
@@ -104,3 +123,11 @@ function Remove-DirectoryContents {
     }
   }
 }
+
+Export-ModuleMember -Function Test-DirectoryPath,
+Test-FilePath,
+ZipFiles,
+ExtractZipFile,
+New-Directory,
+Remove-Directory,
+Remove-DirectoryContents
