@@ -1,6 +1,6 @@
 # Handy PowerShell Scripts
 
-So how many times do you write a PowerShell CmdLet for a project, forget about it, go hunt for it a few weeks later then end up writing it from scratch again... This PowerShell repo is going to serve as a hub for all functions I write for automation.
+So how many times do you write a PowerShell CmdLet for a project, forget about it, go hunt for it a few weeks later then end up writing it from scratch again... This happens to me all the time so this PowerShell repo is going to serve as a handy hub for all functions I write for automation.
 
 ***
 ***Web Administration Extensions***
