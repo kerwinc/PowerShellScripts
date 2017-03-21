@@ -123,7 +123,7 @@ function Test-SiteName ([string]$siteName) {
   return $true
 }
 
-Export-ModuleMember -Function Test-SiteName
+#Export-ModuleMember -Function Test-SiteName
 
 function Set-SitePhysicalPath {
   [CmdletBinding()]

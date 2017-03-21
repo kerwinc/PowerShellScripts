@@ -3,8 +3,16 @@
 So how many times do you write a PowerShell CmdLet for a project, forget about it, go hunt for it a few weeks later then end up writing it from scratch again... This PowerShell repo is going to serve as a hub for all CmdLets I write for automation.
 
 ***
-***IIS - Web Administration Extensions***
+***Web Administration Extensions***
 
-This module has a ton of handy CmdLet wrappers for managing WebSites and WebApplications.
+This module has a few of handy CmdLet wrappers for managing WebSites and WebApplications. Here is brief overview of the public functions:
+- Get-SiteAppPool: Gets a site's application pool for a website or webapplication.
+- Get-SitePhysicalPath: Gets a site's physical path for a website or webapplication.
+- Test-AppPoolExists: Tests if an application pool exists. Returns a boolean value.
+- Test-SiteExists: Tests if a website or webapplication exists. Returns a boolean value.
+- **Set-SitePhysicalPath**: Changes a website or web application's physical path.
+- **Start-WebApplicationPool**: Starts a application pool and waits for the application pool's state to change.
+- **Stop-WebApplicationPool**: Stops a application pool and waits for the application pool's state to change.
+- **Publish-WebSite**: This function allows you to publish a folder's contents to a web site or web application by name. It looks up the site's physical path, application pool during the publish.
 
 *I will be adding Pester tests in the near future...*
