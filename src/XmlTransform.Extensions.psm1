@@ -1,3 +1,6 @@
+
+$ErrorActionPreference = "Stop"
+
 function Invoke-XmlTransform {
   [CmdletBinding()]
   param(
@@ -8,7 +11,10 @@ function Invoke-XmlTransform {
     [ValidateScript( {(Test-Path -Path $_ -PathType Leaf )})]
     [Parameter(Mandatory = $true)][string]$XdtFilePath,
     [ValidateNotNullOrEmpty()]
-    [Parameter()][string]$DestinationPath
+    [Parameter()][string]$DestinationPath,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container )})]
+    [Parameter()][string]$TransformDllDirectory
   )
   Process {
 
@@ -18,7 +24,7 @@ function Invoke-XmlTransform {
     }
     try {
       #Todo: Add a function to resolve the location of the dll 
-      $transformTypePath = "$PSScriptRoot\Lib\Microsoft.Web.XmlTransform.dll"
+      $transformTypePath = "$TransformDllDirectory\Microsoft.Web.XmlTransform.dll"
       Write-Verbose "Loading Microsoft.Web.XmlTransform.dll from $transformTypePath"
       Add-Type -LiteralPath $transformTypePath
 
@@ -35,7 +41,7 @@ function Invoke-XmlTransform {
         throw "Transformation of $XmlFilePath from $XdtFilePath failed"
       }
 
-      Write-Verbose "Saving transformed XML to $XmlFilePath"
+      Write-Verbose "Saving transformed XML to $DestinationPath"
       $xmldoc.Save($DestinationPath)
       Write-Host "Transform completed successfully!" -ForegroundColor Green
     }

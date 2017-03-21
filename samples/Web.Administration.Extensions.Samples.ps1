@@ -1,10 +1,13 @@
 Import-module WebAdministration
-Import-Module ".\Web.Administration.Extensions.psm1" -Force
-Import-Module ".\XmlTransform.Extensions.psm1" -Force
 
-$ErrorActionPreference="Stop"
+#Set the script location to the repo's root -SourceApplicationDirectoryPath
+$scriptLocation = (Get-Item -LiteralPath (Split-Path -Parent $MyInvocation.MyCommand.Path)).Parent.FullName
+Set-Location -LiteralPath $scriptLocation
 
-# $ErrorActionPreference = "Stop"
+Import-Module ".\src\File.Extentions.psm1" -Force
+Import-Module ".\src\Web.Administration.Extensions.psm1" -Force
+
+$ErrorActionPreference = "Stop"
 
 # Write-Host "Default Web Site:" -ForegroundColor Green
 # Get-SiteAppPool -SiteName "Default Web Site"
@@ -36,9 +39,7 @@ $ErrorActionPreference="Stop"
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
-# Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\demo_19-03-17_203447.zip" -Verbose
-
-# New-WebSiteOrWebApplication -SiteName "Default Web Site\Demo3" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Verbose
+# Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\MyFancySite_21-03-17_142229.zip" -Verbose
 
 # ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
 # Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_20-03-17_181053.zip" -Verbose
@@ -50,6 +51,3 @@ $ErrorActionPreference="Stop"
 # Start-WebApplicationPool -AppPoolName "MyFancySite" -Verbose
 
 # Set-SitePhysicalPath -SiteName "MyFancySite2" -NewPhysicalPath "C:\inetpub\wwwroot\MyFancySite"
-
-#  Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -DestinationPath "C:\Backup\Web.Error.config" -Verbose
-# Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -Verbose

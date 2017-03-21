@@ -1,4 +1,7 @@
-Import-Module ".\File.Extentions.psm1" -Force
+# Import-Module ".\File.Extentions.psm1" -Force
+#Requires -Modules File.Extentions
+
+$ErrorActionPreference = "Stop"
 
 function Get-WebApplicationFromSiteName {
   [CmdletBinding()]

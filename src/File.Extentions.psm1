@@ -1,3 +1,22 @@
+$ErrorActionPreference = "Stop"
+
+function Copy-DirectoryContents {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {-not(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$Source,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {-not(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$Destination,
+    [Parameter()][switch]$Force = $false,
+    [Parameter()][switch]$WhatIf = $false
+  )
+  Process {
+    Get-ChildItem -LiteralPath $Source | Copy-Item -Destination $Destination -Recurse -Force $Force -WhatIf $WhatIf
+  }
+}
+
 function Test-DirectoryPath {
   [CmdletBinding()]
   param(
@@ -48,11 +67,10 @@ function ZipFiles {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {(Test-Path -Path $_ -PathType File)})]
-    [Parameter(Mandatory = $true)][string]$Zipfilename,
-    [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
-    [Parameter(Mandatory = $true)][string]$SourceDirectory
+    [Parameter(Mandatory = $true)][string]$SourceDirectory,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Zipfilename
   )
   Process {
     Add-Type -Assembly System.IO.Compression.FileSystem
@@ -67,7 +85,7 @@ function ExtractZipFile {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {(Test-Path -Path $_ -PathType File)})]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Leaf)})]
     [Parameter(Mandatory = $true)][string]$Zipfilename,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
