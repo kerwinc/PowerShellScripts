@@ -30,6 +30,9 @@ function Copy-Directory {
   )
   Process {
     Write-Verbose "Starting copy of $Directory to $Destination"
+    if ($Force) {
+      Write-Warning "-Force was specified. The directory will be overwritten if it exists in $Destination"
+    }
     Copy-Item -LiteralPath $Directory -Destination $Destination -Recurse -Force:$Force
   }
 }
@@ -127,9 +130,10 @@ function New-Directory {
     [Parameter()][switch]$Force = $false
   )
   Process {
-    if (Test-DirectoryPath -Path $Path) {
+    if ((Test-DirectoryPath -Path $Path)) {
       throw "Directory ($path) already exists"
     }
+    Write-Verbose "Creating new directory at $Path"
     New-Item -ItemType Directory -Path $Path -Force:$Force
   }
 }

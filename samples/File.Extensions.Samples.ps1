@@ -8,9 +8,9 @@ Import-Module ".\src\File.Extentions.psm1" -Force
 
 $ErrorActionPreference = "Stop"
 
-Copy-Directory -Directory "C:\Temp" --Destination "C:\Backup" -WhatIf
+# Copy-Directory -Directory "C:\Temp" -Destination "C:\Backup" -Verbose -Force -WhatIf
 # Copy-DirectoryContents -Source "C:\Temp" -Destination "C:\Backup\temp" -Verbose -Force -WhatIf
 # ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
-# New-Directory -Path "c:\Backup\Temp"
+# New-Directory -Path "c:\Backup\Temp" -Force
 # Remove-Directory -Path "C:\Backup\Temp" -Verbose -WhatIf
 # Remove-DirectoryContents -Path "C:\Backup\Temp" -Verbose -WhatIf
