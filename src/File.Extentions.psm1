@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 function Copy-DirectoryContents {
-  [CmdletBinding(SupportsShouldProcess=$true)]
+  [CmdletBinding(SupportsShouldProcess = $true)]
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
@@ -17,7 +17,22 @@ function Copy-DirectoryContents {
   }
 }
 
-Export-ModuleMember -Function Copy-DirectoryContents
+function Copy-Directory {
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$Directory,
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
+    [Parameter(Mandatory = $true)][string]$Destination,
+    [Parameter()][switch]$Force
+  )
+  Process {
+    Write-Verbose "Starting copy of $Directory to $Destination"
+    Copy-Item -LiteralPath $Directory -Destination $Destination -Recurse -Force:$Force
+  }
+}
 
 function Test-DirectoryPath {
   [CmdletBinding()]
@@ -104,7 +119,7 @@ function ExtractZipFile {
 }
 
 function New-Directory {
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess = $true)]
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {-not(Test-Path -Path $_ -PathType Container)})]
@@ -120,20 +135,7 @@ function New-Directory {
 }
 
 function Remove-Directory {
-  [CmdletBinding()]
-  param(
-    [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
-    [Parameter(Mandatory = $true)][string]$Path
-  )
-  Process {
-    Write-Verbose "Removing Directory: $path"
-    Remove-Item -LiteralPath $Path -Recurse -Force
-  }
-}
-
-function Remove-DirectoryContents {
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess = $true)]
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-Path -Path $_ -PathType Container})]
@@ -141,20 +143,31 @@ function Remove-DirectoryContents {
   )
   Process {
     if ((Test-DirectoryPath -Path $Path)) {
-      Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force -WhatIf
-      Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force
+      Write-Verbose "Removing Directory: $path"
+      Remove-Item -LiteralPath $Path -Recurse -Force
     }
     else {
       throw "Directry Path is invalid: $path"
-      exit
     }
   }
 }
 
-Export-ModuleMember -Function Test-DirectoryPath,
-Test-FilePath,
-ZipFiles,
-ExtractZipFile,
-New-Directory,
-Remove-Directory,
-Remove-DirectoryContents
+function Remove-DirectoryContents {
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
+    [Parameter(Mandatory = $true)][string]$Path
+  )
+  Process {
+    if ((Test-DirectoryPath -Path $Path)) {
+      Write-Verbose "Removing all items from $Path"
+      Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force
+    }
+    else {
+      throw "Directry Path is invalid: $path"
+    }
+  }
+}
+
+Export-ModuleMember -Function * -Alias *

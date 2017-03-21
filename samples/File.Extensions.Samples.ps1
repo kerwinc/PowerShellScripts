@@ -6,8 +6,11 @@ Set-Location -LiteralPath $scriptLocation
 
 Import-Module ".\src\File.Extentions.psm1" -Force
 
-$ErrorActionPreference="Stop"
+$ErrorActionPreference = "Stop"
 
+Copy-Directory -Directory "C:\Temp" --Destination "C:\Backup" -WhatIf
 # Copy-DirectoryContents -Source "C:\Temp" -Destination "C:\Backup\temp" -Verbose -Force -WhatIf
 # ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"
-# Restore-WebSite -SiteName "MyFancySite" -BackupZipFile "C:\Backup\MyFancySite_20-03-17_181053.zip" -Verbose
+# New-Directory -Path "c:\Backup\Temp"
+# Remove-Directory -Path "C:\Backup\Temp" -Verbose -WhatIf
+# Remove-DirectoryContents -Path "C:\Backup\Temp" -Verbose -WhatIf
