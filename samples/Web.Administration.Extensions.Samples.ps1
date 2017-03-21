@@ -38,7 +38,7 @@ $ErrorActionPreference = "Stop"
 # Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose 
 # Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
-# New-IISWebSite -SiteName "MyFancySite2" -Port 8082 -ApplicationPool "MyFancySite2Pool" -PhysicalPath "C:\inetpub\wwwroot\Demo3" -Force -Verbose
+# New-IISWebSite -SiteName "MyFancySite4" -Port 8083 -ApplicationPool "MyFancySite4" -PhysicalPath "C:\inetpub\wwwroot\Demo4" -Force -Verbose
 # Restore-WebSite -SiteName "MyFancySite2" -BackupZipFile "C:\Backup\MyFancySite_21-03-17_142229.zip" -Verbose
 
 # ExtractZipFile -Zipfilename "C:\Backup\MyFancySite_18-03-17_225919.zip" -Destination "C:\Backup\MyFancySite_18-03-17_225919"

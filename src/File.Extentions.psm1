@@ -1,21 +1,23 @@
 $ErrorActionPreference = "Stop"
 
 function Copy-DirectoryContents {
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess=$true)]
   param(
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {-not(Test-Path -Path $_ -PathType Container)})]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
     [Parameter(Mandatory = $true)][string]$Source,
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {-not(Test-Path -Path $_ -PathType Container)})]
+    [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
     [Parameter(Mandatory = $true)][string]$Destination,
-    [Parameter()][switch]$Force = $false,
-    [Parameter()][switch]$WhatIf = $false
+    [Parameter()][switch]$Force
   )
   Process {
-    Get-ChildItem -LiteralPath $Source | Copy-Item -Destination $Destination -Recurse -Force $Force -WhatIf $WhatIf
+    Write-Verbose "Starting copy items from $Source to $Destination"
+    Get-ChildItem -LiteralPath $Source | Copy-Item -Destination $Destination -Recurse -Force:$Force
   }
 }
+
+Export-ModuleMember -Function Copy-DirectoryContents
 
 function Test-DirectoryPath {
   [CmdletBinding()]
@@ -113,7 +115,7 @@ function New-Directory {
     if (Test-DirectoryPath -Path $Path) {
       throw "Directory ($path) already exists"
     }
-    New-Item -ItemType Directory -Path $Path -Force
+    New-Item -ItemType Directory -Path $Path -Force:$Force
   }
 }
 

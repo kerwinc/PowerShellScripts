@@ -1,4 +1,3 @@
-# Import-Module ".\File.Extentions.psm1" -Force
 #Requires -Modules File.Extentions
 
 $ErrorActionPreference = "Stop"
@@ -60,6 +59,8 @@ function Get-SiteAppPool {
   }
 }
 
+Export-ModuleMember -Function Get-SiteAppPool
+
 function Get-SitePhysicalPath {
   [CmdletBinding()]
   param(
@@ -80,6 +81,8 @@ function Get-SitePhysicalPath {
   }
 }
 
+Export-ModuleMember -Function Get-SitePhysicalPath
+
 function Test-AppPoolExists {
   [CmdletBinding()]
   param(
@@ -91,6 +94,8 @@ function Test-AppPoolExists {
     return (Test-Path $siteAppPoolPath -pathType container)
   }
 }
+
+Export-ModuleMember -Function Test-AppPoolExists
 
 function Test-SiteExists {
   [CmdletBinding()]
@@ -104,6 +109,8 @@ function Test-SiteExists {
   }
 }
 
+Export-ModuleMember -Function Test-SiteExists
+
 function Test-SiteName ([string]$siteName) {
   if ([System.String]::IsNullOrEmpty($siteName) -or [System.String]::IsNullOrWhiteSpace($siteName)) {
     throw "Site Name is required and cannot be empty"
@@ -115,6 +122,8 @@ function Test-SiteName ([string]$siteName) {
   }
   return $true
 }
+
+Export-ModuleMember -Function Test-SiteName
 
 function Set-SitePhysicalPath {
   [CmdletBinding()]
@@ -139,6 +148,8 @@ function Set-SitePhysicalPath {
     Write-Host "Physical path for $SiteName changed to $NewPhysicalPath"  -foregroundcolor Green
   }
 }
+
+Export-ModuleMember -Function Set-SitePhysicalPath
 
 function Stop-WebApplicationPool {
   [CmdletBinding()]
@@ -176,6 +187,8 @@ function Stop-WebApplicationPool {
   }
 }
 
+Export-ModuleMember -Function Stop-WebApplicationPool
+
 function Start-WebApplicationPool {
   [CmdletBinding()]
   param(
@@ -211,6 +224,8 @@ function Start-WebApplicationPool {
     }
   }
 }
+
+Export-ModuleMember -Function Start-WebApplicationPool
 
 function Publish-WebSite {
   [CmdletBinding()]
@@ -262,6 +277,8 @@ function Publish-WebSite {
   }
 }
 
+Export-ModuleMember -Function Publish-WebSite
+
 function Backup-WebSite {
   [CmdletBinding()]
   param(
@@ -306,6 +323,8 @@ function Backup-WebSite {
     }
   }
 }
+
+Export-ModuleMember -Function Backup-WebSite
 
 function Restore-WebSite {
   [CmdletBinding()]
@@ -352,6 +371,8 @@ function Restore-WebSite {
   }
 }
 
+Export-ModuleMember -Function Restore-WebSite
+
 function New-IISWebSite {
   [CmdletBinding()]
   param(
@@ -373,16 +394,18 @@ function New-IISWebSite {
     if (-not(Test-DirectoryPath -Path $PhysicalPath) -and $Force) {
       if ($Force) {
         Write-Verbose "Creating physical path ($PhysicalPath)"
-        New-Directory -Path $PhysicalPath
+        New-Directory -Path $PhysicalPath -Force:$Force
       }
       else {
         throw "Physical Path ($PhysicalPath) does not exist. Provide -Force to let us create the directory for you"
       }
+
+      #Todo: Add validation for sites using the same port with no host header / same host header
     }
   }
   Process {
     #Create the Application Pool If It Does Not Exist
-    if (-not(Test-AppPoolExists -Name ApplicationPool)) {
+    if (-not(Test-AppPoolExists -Name $ApplicationPool)) {
       if ($Force) {
         Write-Verbose "Creating application pool: $ApplicationPool"
         New-WebAppPool $ApplicationPool
@@ -391,30 +414,58 @@ function New-IISWebSite {
         throw "Application pool does not exist. Provide -Force to let us create the application pool for you"
       }
     }
-    # if ($SiteName.Contains("\")) {
-    #   Write-Verbose "Resolving Website and Web Application Names"
-    #   $siteNameArray = $SiteName.Split("\")
-    #   $rootSiteName = $siteNameArray[0]
-    #   $webAppName = $siteNameArray[1]
-      
-    #   Write-Verbose "Creating web application $webAppName under $rootSiteName"
-    #   New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    # }
-    # else {
     Write-Verbose "Creating website $siteName on port $Port"
     New-WebSite -Name $SiteName -Port $Port -HostHeader $HostHeader -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    # }
   }
 }
 
-Export-ModuleMember -Function New-IISWebSite,
-Get-SiteAppPool,
-Get-SitePhysicalPath,
-Set-SitePhysicalPath,
-Start-WebApplicationPool,
-Stop-WebApplicationPool,
-Backup-WebSite,
-Publish-WebSite,
-Restore-WebSite,
-Test-AppPoolExists,
-Test-SiteExists
+Export-ModuleMember -Function New-IISWebSite
+
+function New-IISWebApplication {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (-not(Test-SiteExists -Name $_)) {$true} else {throw "Site already exists: $_"}})]
+    [Parameter(Mandatory = $true)][string]$SiteName,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$PhysicalPath,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$ApplicationPool,
+    [Parameter()][Switch]$Force = $false
+  )
+  Begin {
+    if (-not(Test-DirectoryPath -Path $PhysicalPath) -and $Force) {
+      if ($Force) {
+        Write-Verbose "Creating physical path ($PhysicalPath)"
+        New-Directory -Path $PhysicalPath -Force:$Force
+      }
+      else {
+        throw "Physical Path ($PhysicalPath) does not exist. Provide -Force to let us create the directory for you"
+      }
+    }
+  }
+  Process {
+    #Create the Application Pool If It Does Not Exist
+    if (-not(Test-AppPoolExists -Name $ApplicationPool)) {
+      if ($Force) {
+        Write-Verbose "Creating application pool: $ApplicationPool"
+        New-WebAppPool $ApplicationPool
+      }
+      else {
+        throw "Application pool does not exist. Provide -Force to let us create the application pool for you"
+      }
+    }
+    if (-not($SiteName.Contains("\"))) {
+      throw "Invalid site name. Please provide the root website and web application name e.g. 'Default Web Site\MyWebApp'"
+    }
+    Write-Verbose "Resolving Website and Web Application Names"
+    $siteNameArray = $SiteName.Split("\")
+    $rootSiteName = $siteNameArray[0]
+    $webAppName = $siteNameArray[1]
+      
+    Write-Verbose "Creating web application $webAppName under $rootSiteName"
+    New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
+  }
+}
+
+Export-ModuleMember -Function New-IISWebApplication
