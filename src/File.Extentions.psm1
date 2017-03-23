@@ -90,7 +90,8 @@ function ZipFiles {
     [ValidateScript( {(Test-Path -Path $_ -PathType Container)})]
     [Parameter(Mandatory = $true)][string]$SourceDirectory,
     [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory = $true)][string]$Zipfilename
+    [Parameter(Mandatory = $true)][string]$Zipfilename,
+    [Parameter()][switch]$OutputContents
   )
   Process {
     Add-Type -Assembly System.IO.Compression.FileSystem
@@ -98,6 +99,15 @@ function ZipFiles {
 
     Write-Verbose "Creating archive from $SourceDirectory to $Zipfilename"
     [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDirectory, $Zipfilename, $compressionLevel, $false)
+
+    if ($OutputContents) {
+      Write-Verbose "Zipfile Contents:"
+      $items = [System.IO.Compression.ZipFile]::OpenRead($Zipfilename).Entries
+      foreach ($item in $items) {
+        $displayValue = $item.FullName + " | Size: " + $item.Length + " | Last Updated: " + $item.LastWriteTime
+        Write-Verbose "File: $displayValue"
+      }
+    }
   }
 }
 

@@ -239,10 +239,11 @@ function Publish-WebSite {
     [Parameter(Mandatory = $true)][string]$SourceApplicationDirectoryPath
   )
   Begin {
+    Write-Output "Publish: Started Website publish of $SourceApplicationDirectoryPath to $siteName"
     Write-Verbose "Getting application pool for $siteName"
     $appPool = Get-SiteAppPool -SiteName $SiteName
     if ($appPool -eq $null -or !(Test-AppPoolExists -Name $appPool)) {
-      Throw "Application Pool ($appName) cannot be null and does not exist"
+      Throw "Publish: Application Pool ($appName) cannot be null and does not exist"
     }
 
     Write-Verbose "Getting physical path for $siteName"
@@ -256,23 +257,18 @@ function Publish-WebSite {
     Stop-WebApplicationPool -AppPoolName $appPool
   }
   Process {
-    #Clean out the site's physical path
-    Write-Verbose "Removing files from $physicalPath"
     Remove-DirectoryContents -Path $physicalPath -Verbose:$VerbosePreference
-
-    #Copy Source files to WebSite's Physical Directory
-    Write-Verbose "Copying files from $SourceApplicationDirectoryPath to $physicalPath"
-    Get-ChildItem -LiteralPath $SourceApplicationDirectoryPath | Copy-Item -Destination $physicalPath -Recurse
+    Copy-DirectoryContents -Source $SourceApplicationDirectoryPath -Destination $physicalPath -Verbose:$VerbosePreference
   }
   End {
     Write-Verbose "Starting application pool ($appPool) for $siteName"
     Start-WebAppPool -Name $appPool
     if ((Get-WebAppPoolState -Name $appPool).Value -eq "Started") {
-      Write-Host "$appPool for $SiteName started successfully!" -ForegroundColor Green
+      Write-Verbose "Publish: Application pool ($appPool) for Web ($SiteName) started successfully!"
     }
 
     if ($Error.Count -eq 0) {
-      Write-Host "Directory published to $SiteName successfully!" -ForegroundColor Green
+      Write-Host "Publish: Directory ($SourceApplicationDirectoryPath) published to Web ($SiteName) successfully!" -ForegroundColor Green
     }
   }
 }
@@ -313,7 +309,7 @@ function Backup-WebSite {
     Write-Verbose "Creating Zip archive"
     $zipFileName = $site + "_" + (Get-Date -Format "dd-MM-yy_HHmmss") + ".zip"
     $zipFileFullPath = "$BackupDirectory\$zipFileName"
-    ZipFiles -SourceDirectory $physicalPath -Zipfilename $zipFileFullPath
+    ZipFiles -SourceDirectory $physicalPath -Zipfilename $zipFileFullPath -Verbose -OutputContents
   }
   End {
     if ($itemCount -eq 0) {return}
