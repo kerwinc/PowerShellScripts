@@ -1,0 +1,134 @@
+
+$script:assertItems = @()
+
+function Add-AssertItem {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Name,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Value,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Type
+  )
+  Process {
+    $item = New-Object System.Object
+    $item | Add-Member -type NoteProperty -name "Variable" -value $Name
+    $item | Add-Member -type NoteProperty -name "Value" -value $Value
+    $item | Add-Member -type NoteProperty -name "Type" -value $Type
+    $item | Add-Member -type NoteProperty -name "Status" -value $null
+    $item | Add-Member -type NoteProperty -name "Error" -value $null
+    $script:assertItems += $item
+    Write-Verbose "$Name added to assert items list"
+  }
+}
+
+function Assert-Folder { 
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][System.Object]$Item
+  )
+  Process {
+    if (Test-DirectoryPath -Path $Item.Value) {
+      $item.Status = "Valid"
+    }
+    else { 
+      $item.Status = "Invalid"
+      $item.Error = "Count not find folder at path: $($item.Value)"
+    }
+  }
+}
+
+function Assert-File { 
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][System.Object]$Item
+  )
+  Process {
+    if (Test-FilePath -Path $Item.Value) {
+      $item.Status = "Valid"
+    }
+    else { 
+      $item.Status = "Invalid"
+      $item.Error = "Count not find file at path: $($item.Value)"
+    }
+  }
+}
+
+function Assert-AppPool { 
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][System.Object]$Item
+  )
+  Process {
+    if (Test-AppPoolExists -Name $Item.Value) {
+      $item.Status = "Valid"
+    }
+    else { 
+      $item.Status = "Invalid"
+      $item.Error = "Application Pool [$($item.Value)] does not exist"
+    }
+  }
+}
+
+function Assert-WebSite { 
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][System.Object]$Item
+  )
+  Process {
+    if (Test-SiteExists -Name $Item.Value) {
+      $item.Status = "Valid"
+    }
+    else { 
+      $item.Status = "Invalid"
+      $item.Error = "WebSite [$($item.Value)] does not exist"
+    }
+  }
+}
+
+function Assert-Items {
+  param(
+    [Parameter()][switch]$ErrorIfAnyInvalid
+  )
+  Process {
+    if ($script:assertItems.Count -gt 0) {
+      ForEach ($item in $script:assertItems) {
+        Write-Verbose "Validating item: $($item.Name)"
+        switch ($item.Type) {
+          "Folder" {
+            $item = Assert-Folder -Item $item
+          }
+          "Application Pool" {
+            $item = Assert-AppPool -Item $item
+          }
+          "WebSite" {
+            $item = Assert-WebSite -Item $item
+          }
+          "File" {
+            $item = Assert-File -Item $item
+          }
+          Default {
+            Write-Host "Unknown item type..."
+          }
+        }
+      }
+    }
+    
+    $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
+    $response = @{items = $script:assertItems; errorItems = $errorItems}
+    return $response
+  }
+}
+
+function Clear-AssertItems { 
+  Process {
+    $script:assertItems = @()
+  }
+}
+
+Export-ModuleMember -function * -Variable *
