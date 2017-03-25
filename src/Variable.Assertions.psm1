@@ -6,7 +6,6 @@ function Add-AssertItem {
   param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$Name,
-    # [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $false)][string]$Value,
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Folder", "Application Pool", "WebSite", "File")]
