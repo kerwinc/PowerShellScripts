@@ -10,7 +10,9 @@ function Add-AssertItem {
     [Parameter(Mandatory = $true)][string]$Value,
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Folder", "Application Pool", "WebSite", "File")]
-    [Parameter(Mandatory = $true)][string]$Type
+    [Parameter(Mandatory = $true)][string]$Type,
+    [ValidateSet("Error", "Warning", "Info")]
+    [Parameter()][string]$ErrorPreference = "Error"
   )
   Process {
     $item = New-Object System.Object
@@ -19,6 +21,7 @@ function Add-AssertItem {
     $item | Add-Member -type NoteProperty -name "Type" -value $Type
     $item | Add-Member -type NoteProperty -name "Status" -value $null
     $item | Add-Member -type NoteProperty -name "Error" -value $null
+    $item | Add-Member -type NoteProperty -name "ErrorPreference" -value $ErrorPreference
     $script:assertItems += $item
     Write-Verbose "$Name added to assert items list"
   }
@@ -94,7 +97,8 @@ function Assert-WebSite {
 
 function Assert-Items {
   param(
-    
+    [Parameter()][switch]$ShowOutput,
+    [Parameter()][switch]$ErrorIfAnyInvalid
   )
   Process {
     if ($script:assertItems.Count -gt 0) {
@@ -119,20 +123,25 @@ function Assert-Items {
         }
       }
     }
-    $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
-    $response = @{items = $script:assertItems; errorItems = $errorItems}
-    return $response
+
+    if ($ShowOutput) {
+      Show-AssertResult -ErrorIfAnyInvalid:$ErrorIfAnyInvalid
+    }
+    else {
+      $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
+      $response = @{items = $script:assertItems; errorItems = $errorItems}
+      return $response
+    }
+    
   }
 }
 
 function Show-AssertResult {
   param(
-    [ValidateNotNull]
-    [Parameter()][hashtable]$Output,
     [Parameter()][switch]$ErrorIfAnyInvalid
   )
   Process {
-    $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
+    $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid" -and $_.ErrorPreference -eq "Error"}
     $script:assertItems | Sort-Object  -Property Variable | Format-Table
     if ($errorItems.Count -gt 0) {
       Write-Host "Invalid Items:" -ForegroundColor Red
