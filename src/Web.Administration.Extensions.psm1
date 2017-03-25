@@ -1,4 +1,6 @@
-Import-Module ".\IO.File.Extentions.psm1" -Force
+#Requires -Modules File.Extentions
+
+$ErrorActionPreference = "Stop"
 
 function Get-WebApplicationFromSiteName {
   [CmdletBinding()]
@@ -57,6 +59,8 @@ function Get-SiteAppPool {
   }
 }
 
+Export-ModuleMember -Function Get-SiteAppPool
+
 function Get-SitePhysicalPath {
   [CmdletBinding()]
   param(
@@ -77,25 +81,35 @@ function Get-SitePhysicalPath {
   }
 }
 
-function Test-AppPoolExists ([string]$Name) {
-  $siteAppPoolPath = "IIS:\AppPools\" + $Name
-  if ((Test-Path $siteAppPoolPath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
+Export-ModuleMember -Function Get-SitePhysicalPath
+
+function Test-AppPoolExists {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  Process {
+    $siteAppPoolPath = "IIS:\AppPools\" + $Name
+    return (Test-Path $siteAppPoolPath -pathType container)
   }
 }
 
-function Test-SiteExists ([string]$Name) {
-  $sitePath = "IIS:\Sites\" + $Name
-  if ((Test-Path $sitePath -pathType container)) {
-    return $true
-  }
-  else {
-    return $false
+Export-ModuleMember -Function Test-AppPoolExists
+
+function Test-SiteExists {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  Process {
+    $sitePath = "IIS:\Sites\" + $Name
+    return (Test-Path $sitePath -pathType container)
   }
 }
+
+Export-ModuleMember -Function Test-SiteExists
 
 function Test-SiteName ([string]$siteName) {
   if ([System.String]::IsNullOrEmpty($siteName) -or [System.String]::IsNullOrWhiteSpace($siteName)) {
@@ -109,34 +123,39 @@ function Test-SiteName ([string]$siteName) {
   return $true
 }
 
+#Export-ModuleMember -Function Test-SiteName
+
 function Set-SitePhysicalPath {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {Test-SiteName $_})]
+    [ValidateScript( {if (Test-SiteExists -Name $_) {$true} else {throw "Site does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$NewPhysicalPath
   )
+  Process {
+    #check if the site exists - This is happening twice but its OK for now
+    $siteIISPath = "IIS:\Sites\" + $SiteName
+    if (-not(Test-Path $siteIISPath -pathType container)) {
+      throw "Site does not exist in IIS: $SiteName"
+    }
 
-  $siteIISPath = "IIS:\Sites\" + $SiteName
+    Write-Verbose "Setting property PhysicalPath on $siteName to $NewPhysicalPath"
+    Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
 
-  #check if the site exists
-  if (!(Test-Path $siteIISPath -pathType container)) {
-    Write-Host "Site does not exist in IIS: "$appName -foregroundcolor "red"
-    return
+    Write-Host "Physical path for $SiteName changed to $NewPhysicalPath"  -foregroundcolor Green
   }
-
-  Set-ItemProperty $siteIISPath -name physicalPath -value $NewPhysicalPath
-
-  $site = Get-Website -Name $appName
-  Write-Host "Physical path for "$site.name" changed to" $site.physicalPath  -foregroundcolor "green"
 }
+
+Export-ModuleMember -Function Set-SitePhysicalPath
 
 function Stop-WebApplicationPool {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (Test-AppPoolExists -Name $_) {$true} else {throw "Application Pool does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$AppPoolName
   )
   Begin {
@@ -168,10 +187,13 @@ function Stop-WebApplicationPool {
   }
 }
 
+Export-ModuleMember -Function Stop-WebApplicationPool
+
 function Start-WebApplicationPool {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (Test-AppPoolExists -Name $_) {$true} else {throw "Application Pool does not exist: $_"}})]
     [Parameter(Mandatory = $true)][string]$AppPoolName
   )
   Begin {
@@ -203,6 +225,8 @@ function Start-WebApplicationPool {
   }
 }
 
+Export-ModuleMember -Function Start-WebApplicationPool
+
 function Publish-WebSite {
   [CmdletBinding()]
   param(
@@ -215,40 +239,41 @@ function Publish-WebSite {
     [Parameter(Mandatory = $true)][string]$SourceApplicationDirectoryPath
   )
   Begin {
+    Write-Output "Publish: Started Website publish of $SourceApplicationDirectoryPath to $siteName"
     Write-Verbose "Getting application pool for $siteName"
     $appPool = Get-SiteAppPool -SiteName $SiteName
     if ($appPool -eq $null -or !(Test-AppPoolExists -Name $appPool)) {
-      Throw "Application Pool ($appName) cannot be null and does not exist"
+      Throw "Publish: Application Pool ($appName) cannot be null and does not exist"
     }
 
     Write-Verbose "Getting physical path for $siteName"
     $physicalPath = Get-SitePhysicalPath -SiteName $SiteName
-    Test-DirectoryPath -Path $physicalPath
+
+    #Validate the Physical Path
+    if ($physicalPath -eq $null) { throw "Physical Path for site ($siteName) cannot be null" }
+    if (-not(Test-DirectoryPath -Path $physicalPath)) { throw "Invalid directory path: $physicalPath"}
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool
   }
   Process {
-    #Clean out the site's physical path
-    Write-Verbose "Removing files from $physicalPath"
     Remove-DirectoryContents -Path $physicalPath -Verbose:$VerbosePreference
-
-    #Copy Source files to WebSite's Physical Directory
-    Write-Verbose "Copying files from $SourceApplicationDirectoryPath to $physicalPath"
-    Copy-Item -Path "$SourceApplicationDirectoryPath\*" -Destination $physicalPath -Recurse
+    Copy-DirectoryContents -Source $SourceApplicationDirectoryPath -Destination $physicalPath -Verbose:$VerbosePreference
   }
   End {
     Write-Verbose "Starting application pool ($appPool) for $siteName"
     Start-WebAppPool -Name $appPool
     if ((Get-WebAppPoolState -Name $appPool).Value -eq "Started") {
-      Write-Host "$appPool for $SiteName started successfully!" -ForegroundColor Green
+      Write-Verbose "Publish: Application pool ($appPool) for Web ($SiteName) started successfully!"
     }
 
     if ($Error.Count -eq 0) {
-      Write-Host "Directory published to $SiteName successfully!" -ForegroundColor Green
+      Write-Host "Publish: Directory ($SourceApplicationDirectoryPath) published to Web ($SiteName) successfully!" -ForegroundColor Green
     }
   }
 }
+
+Export-ModuleMember -Function Publish-WebSite
 
 function Backup-WebSite {
   [CmdletBinding()]
@@ -284,7 +309,7 @@ function Backup-WebSite {
     Write-Verbose "Creating Zip archive"
     $zipFileName = $site + "_" + (Get-Date -Format "dd-MM-yy_HHmmss") + ".zip"
     $zipFileFullPath = "$BackupDirectory\$zipFileName"
-    ZipFiles -sourcedir $physicalPath -zipfilename $zipFileFullPath
+    ZipFiles -SourceDirectory $physicalPath -Zipfilename $zipFileFullPath -Verbose -OutputContents
   }
   End {
     if ($itemCount -eq 0) {return}
@@ -294,6 +319,8 @@ function Backup-WebSite {
     }
   }
 }
+
+Export-ModuleMember -Function Backup-WebSite
 
 function Restore-WebSite {
   [CmdletBinding()]
@@ -340,44 +367,101 @@ function Restore-WebSite {
   }
 }
 
-function New-WebSiteOrWebApplication {
+Export-ModuleMember -Function Restore-WebSite
+
+function New-IISWebSite {
   [CmdletBinding()]
   param(
     [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (-not(Test-SiteExists -Name $_)) {$true} else {throw "Site already exists: $_"}})]
     [Parameter(Mandatory = $true)][string]$SiteName,
     [ValidateNotNullOrEmpty()]
-    [Parameter()][int]$Port,
+    [ValidateRange(80, 65535)]
+    [Parameter(Mandatory = $true)][int]$Port,
     [ValidateNotNullOrEmpty()]
     [Parameter()][string]$HostHeader,
     [ValidateNotNullOrEmpty()]
-    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
     [Parameter(Mandatory = $true)][string]$PhysicalPath,
     [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory = $true)][string]$ApplicationPool
+    [Parameter(Mandatory = $true)][string]$ApplicationPool,
+    [Parameter()][Switch]$Force = $false
   )
   Begin {
-    if (-not(Test-DirectoryPath -Path $PhysicalPath)) {
-      Write-Verbose "Invalid physical path ($PhysicalPath). Please provide a valid directory path"
+    if (-not(Test-DirectoryPath -Path $PhysicalPath) -and $Force) {
+      if ($Force) {
+        Write-Verbose "Creating physical path ($PhysicalPath)"
+        New-Directory -Path $PhysicalPath -Force:$Force
+      }
+      else {
+        throw "Physical Path ($PhysicalPath) does not exist. Provide -Force to let us create the directory for you"
+      }
+
+      #Todo: Add validation for sites using the same port with no host header / same host header
     }
   }
   Process {
     #Create the Application Pool If It Does Not Exist
-    if (!(Test-AppPoolExists -Name ApplicationPool)) {
-      New-WebAppPool $ApplicationPool
+    if (-not(Test-AppPoolExists -Name $ApplicationPool)) {
+      if ($Force) {
+        Write-Verbose "Creating application pool: $ApplicationPool"
+        New-WebAppPool $ApplicationPool
+      }
+      else {
+        throw "Application pool does not exist. Provide -Force to let us create the application pool for you"
+      }
     }
-
-    if ($SiteName.Contains("\")) {
-      Write-Verbose "Resolving Website and Web Application Names"
-      $siteNameArray = $SiteName.Split("\")
-      $rootSiteName = $siteNameArray[0]
-      $webAppName = $siteNameArray[1]
-      
-      Write-Verbose "Creating web application $webAppName under $rootSiteName"
-      New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    }
-    else {
-      Write-Verbose "Creating website $siteName on port $Port"
-      New-WebSite -Name $SiteName -Port $Port -HostHeader $HostHeader -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
-    }
+    Write-Verbose "Creating website $siteName on port $Port"
+    New-WebSite -Name $SiteName -Port $Port -HostHeader $HostHeader -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
   }
 }
+
+Export-ModuleMember -Function New-IISWebSite
+
+function New-IISWebApplication {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {if (-not(Test-SiteExists -Name $_)) {$true} else {throw "Site already exists: $_"}})]
+    [Parameter(Mandatory = $true)][string]$SiteName,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$PhysicalPath,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$ApplicationPool,
+    [Parameter()][Switch]$Force = $false
+  )
+  Begin {
+    if (-not(Test-DirectoryPath -Path $PhysicalPath) -and $Force) {
+      if ($Force) {
+        Write-Verbose "Creating physical path ($PhysicalPath)"
+        New-Directory -Path $PhysicalPath -Force:$Force
+      }
+      else {
+        throw "Physical Path ($PhysicalPath) does not exist. Provide -Force to let us create the directory for you"
+      }
+    }
+  }
+  Process {
+    #Create the Application Pool If It Does Not Exist
+    if (-not(Test-AppPoolExists -Name $ApplicationPool)) {
+      if ($Force) {
+        Write-Verbose "Creating application pool: $ApplicationPool"
+        New-WebAppPool $ApplicationPool
+      }
+      else {
+        throw "Application pool does not exist. Provide -Force to let us create the application pool for you"
+      }
+    }
+    if (-not($SiteName.Contains("\"))) {
+      throw "Invalid site name. Please provide the root website and web application name e.g. 'Default Web Site\MyWebApp'"
+    }
+    Write-Verbose "Resolving Website and Web Application Names"
+    $siteNameArray = $SiteName.Split("\")
+    $rootSiteName = $siteNameArray[0]
+    $webAppName = $siteNameArray[1]
+      
+    Write-Verbose "Creating web application $webAppName under $rootSiteName"
+    New-WebApplication -Name $webAppName -Site $rootSiteName -PhysicalPath $PhysicalPath -ApplicationPool $ApplicationPool
+  }
+}
+
+Export-ModuleMember -Function New-IISWebApplication
