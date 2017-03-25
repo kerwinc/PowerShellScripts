@@ -118,10 +118,30 @@ function Assert-Items {
         }
       }
     }
-    
     $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
     $response = @{items = $script:assertItems; errorItems = $errorItems}
     return $response
+  }
+}
+
+function Show-AssertResult {
+  param(
+    [ValidateNotNull]
+    [Parameter()][hashtable]$Output
+  )
+  Process {
+    $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
+   $script:assertItems | Sort-Object  -Property Variable | Format-Table
+
+    if ($errorItems.Count -gt 0) {
+      Write-Host "Invalid Items:" -ForegroundColor Red
+      Write-Host "----------------------------------------"
+      $errorItems | Format-Table
+      Throw "Some items did not pass validation. Process aborted."
+    }
+    else {
+      Write-Host "All items passed validation" -ForegroundColor Green
+    }
   }
 }
 
@@ -131,4 +151,4 @@ function Clear-AssertItems {
   }
 }
 
-Export-ModuleMember -function * -Variable *
+Export-ModuleMember -function Add-AssertItem, Assert-Items, Clear-AssertItems, Show-AssertResult
