@@ -15,4 +15,4 @@ Add-AssertItem -Name "applicationPool" -Value "DefaultAppPool" -Type "Applicatio
 Add-AssertItem -Name "siteName" -Value "Default Web Site\Demo3" -Type "WebSite"
 Add-AssertItem -Name "CustomPath" -Value "C:\inetpub\wwwroot\Demo3\index.html1" -Type "File" -Verbose
 $output = Assert-Items
-Show-AssertResult
+Show-AssertResult -ErrorIfAnyInvalid

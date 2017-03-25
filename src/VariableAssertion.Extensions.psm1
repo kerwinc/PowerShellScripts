@@ -9,6 +9,7 @@ function Add-AssertItem {
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$Value,
     [ValidateNotNullOrEmpty()]
+    [ValidateSet("Folder", "Application Pool", "WebSite", "File")]
     [Parameter(Mandatory = $true)][string]$Type
   )
   Process {
@@ -93,7 +94,7 @@ function Assert-WebSite {
 
 function Assert-Items {
   param(
-    [Parameter()][switch]$ErrorIfAnyInvalid
+    
   )
   Process {
     if ($script:assertItems.Count -gt 0) {
@@ -127,17 +128,19 @@ function Assert-Items {
 function Show-AssertResult {
   param(
     [ValidateNotNull]
-    [Parameter()][hashtable]$Output
+    [Parameter()][hashtable]$Output,
+    [Parameter()][switch]$ErrorIfAnyInvalid
   )
   Process {
     $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid"}
-   $script:assertItems | Sort-Object  -Property Variable | Format-Table
-
+    $script:assertItems | Sort-Object  -Property Variable | Format-Table
     if ($errorItems.Count -gt 0) {
       Write-Host "Invalid Items:" -ForegroundColor Red
       Write-Host "----------------------------------------"
-      $errorItems | Format-Table
-      Throw "Some items did not pass validation. Process aborted."
+      $errorItems | Sort-Object  -Property Variable |Format-Table
+      if ($ErrorIfAnyInvalid) {
+        Throw "Some items did not pass validation. Process aborted."  
+      }
     }
     else {
       Write-Host "All items passed validation" -ForegroundColor Green
