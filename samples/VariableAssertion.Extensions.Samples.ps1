@@ -10,8 +10,8 @@ Import-Module ".\src\Variable.Assertions.psm1" -Force
 
 $ErrorActionPreference = "Stop"
 
-Add-AssertItem -Name "physicalPath" -Value "C:\inetpub\wwwroot\Demo" -Type "Folder"
-Add-AssertItem -Name "applicationPool" -Value "DefaultAppPool" -Type "Application Pool" -ErrorPreference "Warning"
-Add-AssertItem -Name "siteName" -Value "Default Web Site\Demo3" -Type "WebSite"
-Add-AssertItem -Name "CustomPath" -Value "C:\inetpub\wwwroot\Demo3\index.html1" -Type "File" -Verbose
+Add-AssertItem -Name "physicalPath" -Value "C:\inetpub\wwwroot\Demo" -Type Folder
+Add-AssertItem -Name "applicationPool" -Value "DefaultAppPool" -Type "Application Pool" -ErrorPreference Warning
+Add-AssertItem -Name "siteName" -Value "Default Web Site\Demo3" -Type WebSite
+Add-AssertItem -Name "CustomPath" -Value "C:\inetpub\wwwroot\Demo3\index.html1" -Type File
 Assert-Items -ShowOutput -ErrorIfAnyInvalid
