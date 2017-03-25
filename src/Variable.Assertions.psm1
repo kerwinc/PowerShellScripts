@@ -6,6 +6,7 @@ function Add-AssertItem {
   param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $true)][string]$Name,
+    # [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory = $false)][string]$Value,
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Folder", "Application Pool", "WebSite", "File")]
@@ -124,7 +125,7 @@ function Assert-Items {
     Write-Verbose "Variable Verification Starting"
     if ($script:assertItems.Count -gt 0) {
       ForEach ($item in $script:assertItems) {
-        Write-Verbose "Validating item: $($item.Variable)"
+        Write-Verbose "Validating item: $($item.Variable) => [$($item.Value)]"
         switch ($item.Type) {
           "Folder" {
             $item = Assert-Folder -Item $item
@@ -166,7 +167,16 @@ function Show-AssertResult {
   )
   Process {
     $errorItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid" -and $_.ErrorPreference -eq "Error"}
+    $warningItems = $script:assertItems | Where-Object {$_.Status -eq "Invalid" -and $_.ErrorPreference -eq "Warning"}
+    $validItems = $script:assertItems | Where-Object {$_.Status -eq "Valid"}
+
     $script:assertItems | Sort-Object  -Property Variable | Format-Table
+    Write-Host "Variable Verification Summary:"
+    Write-Host "Total Variables: $($script:assertItems.Count)"
+    Write-Host "Valid Variables: $($validItems.Count)"
+    Write-Host "Wainings: $($warningItems.Count)"
+    Write-Host "Errors: $($errorItems.Count)"
+
     if ($errorItems.Count -gt 0) {
       Write-Host "Invalid Items:" -ForegroundColor Red
       Write-Host "----------------------------------------"
@@ -188,4 +198,7 @@ function Clear-AssertItems {
   }
 }
 
-Export-ModuleMember -function Add-AssertItem, Assert-Items, Clear-AssertItems, Show-AssertResult
+Export-ModuleMember -function Add-AssertItem,
+Assert-Items,
+Clear-AssertItems,
+Show-AssertResult
