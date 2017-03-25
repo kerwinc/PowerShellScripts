@@ -3,16 +3,17 @@ $scriptLocation = (Get-Item -LiteralPath (Split-Path -Parent $MyInvocation.MyCom
 Set-Location -LiteralPath $scriptLocation
 
 Import-Module ".\src\XmlTransform.Extensions.psm1" -Force
+Import-Module ".\src\XmlTransform.Assertions.psm1" -Force
 
 $ErrorActionPreference = "Stop"
 
-# Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -TransformDllDirectory "$scriptLocation\lib" -Verbose
+$transformDllPath = "$scriptLocation\lib"
+Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "C:\Backup\Web.Release.config" -TransformDllDirectory $transformDllPath -Verbose
 
-#Test a bunch of transforms at once
-$config = "C:\Backup\Web.config"
-$transformFiles = Get-ChildItem -Path "C:\Backup\*.config" -Exclude "web.config"
-foreach ($xdtFile in $transformFiles ) {
-  Write-Host "Transforming $config with $($xdtFile.Name):"
-  $xdtFilePath = 
-  Invoke-XmlTransform -XmlFilePath "C:\Backup\Web.config" -XdtFilePath "$($xdtFile.FullName)" -DestinationPath "C:\Backup\output\$($xdtFile.Name)" -TransformDllDirectory "$scriptLocation\lib"
-}
+# #Test a bunch of transforms at once
+# $config = "C:\Backup\Web.config"
+# $transformFiles = Get-ChildItem -Path "C:\Backup\*.config" -Exclude "web.config"
+# foreach ($xdtFile in $transformFiles ) {
+#   Add-TransformAssertItem -Config $config -Transform ($xdtFile.FullName)
+# }
+# Assert-Items -ShowOutput -ErrorIfAnyInvalid -Verbose

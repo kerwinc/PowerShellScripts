@@ -1,6 +1,3 @@
-
-$ErrorActionPreference = "Stop"
-
 function Invoke-XmlTransform {
   [CmdletBinding()]
   param(
@@ -14,7 +11,8 @@ function Invoke-XmlTransform {
     [Parameter()][string]$DestinationPath,
     [ValidateNotNullOrEmpty()]
     [ValidateScript( {(Test-Path -Path $_ -PathType Container )})]
-    [Parameter()][string]$TransformDllDirectory
+    [Parameter()][string]$TransformDllDirectory,
+    [Parameter()][switch]$SuppressOutput
   )
   Process {
 
@@ -43,7 +41,9 @@ function Invoke-XmlTransform {
 
       Write-Verbose "Saving transformed XML to $DestinationPath"
       $xmldoc.Save($DestinationPath)
-      Write-Host "Transform completed successfully!" -ForegroundColor Green
+      if (!$SuppressOutput) {
+        Write-Host "Transform completed successfully!" -ForegroundColor Green  
+      }
     }
     catch {
       Write-Error "Error transforming XML file. "$PSItem.Exception
