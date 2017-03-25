@@ -179,7 +179,7 @@ function Show-AssertResult {
     if ($errorItems.Count -gt 0) {
       Write-Host "Invalid Items:" -ForegroundColor Red
       Write-Host "----------------------------------------"
-      $errorItems | Sort-Object  -Property Variable |Format-Table
+      $errorItems | Sort-Object  -Property Variable |Format-Table Variable,Value, Type, Status, Error
       if ($ErrorIfAnyInvalid) {
         Throw "Some items did not pass validation. Process aborted."  
       }
