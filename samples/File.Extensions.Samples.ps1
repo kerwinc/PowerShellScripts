@@ -14,3 +14,4 @@ $ErrorActionPreference = "Stop"
 # New-Directory -Path "c:\Backup\Temp" -Force
 # Remove-Directory -Path "C:\Backup\Temp" -Verbose -WhatIf
 # Remove-DirectoryContents -Path "C:\Backup\Temp" -Verbose -WhatIf
+# Rename-FilesWithMatchingCharacters -LiteralPath "C:\Backup\Rename" -Filter "*.config" -Recurse -MatchOn "%20" -ReplaceWith " "

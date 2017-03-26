@@ -184,4 +184,44 @@ function Remove-DirectoryContents {
   }
 }
 
+function Rename-FilesWithMatchingCharacters {
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript( {Test-Path -Path $_ -PathType Container})]
+    [Parameter(Mandatory = $true)][string]$LiteralPath,
+    [Parameter()][string]$Filter,
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$MatchOn,
+    [Parameter(Mandatory = $true)][string]$ReplaceWith,
+    [Parameter()][switch]$Recurse,
+    [Parameter()][switch]$SuppressOutput
+  )
+  Process {
+    Write-Verbose "Starting rename on matching characters"
+    if ((Test-DirectoryPath -Path $LiteralPath)) {
+      Write-Verbose "Getting files matching [#$Filter] in $LiteralPath"
+      $files = Get-ChildItem -LiteralPath $LiteralPath -Filter $Filter -Recurse:$Recurse
+
+      foreach ($file in $files) {
+        Write-Verbose "Checking if $($file.Name) contains $MatchOn"
+
+        if ($file.Name.Contains("%20")) {
+          
+          $newName = $file.Name.Replace("%20", " ")
+          Write-Verbose "Renaming $($file.Name) to $newName"
+          Rename-Item -LiteralPath $file.FullName -NewName $newName  
+
+          if (!$SuppressOutput) {
+            Write-Host "Renamed $($file.Name) to $newName" -ForegroundColor Green
+          }
+        }
+      }
+    }
+    else {
+      throw "Directory Path is invalid: $LiteralPath"
+    }
+  }
+}
+
 Export-ModuleMember -Function * -Alias *
