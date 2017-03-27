@@ -83,6 +83,34 @@ function Get-SitePhysicalPath {
 
 Export-ModuleMember -Function Get-SitePhysicalPath
 
+function Get-WebSitesUsingPhysicalPath {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$PhysicalPath
+  )
+  Process {
+    $sites = Get-WebSite | Where-Object {$_.PhysicalPath -like $PhysicalPath }
+    return $sites
+  }
+}
+
+Export-ModuleMember -Function Get-WebSitesUsingPhysicalPath
+
+function Get-WebApplicationsUsingPhysicalPath {
+  [CmdletBinding()]
+  param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory = $true)][string]$PhysicalPath
+  )
+  Process {
+    $webApps = Get-WebApplication | Where-Object {$_.PhysicalPath -like $PhysicalPath } | Format-Table
+    return $webApps
+  }
+}
+
+Export-ModuleMember -Function Get-WebApplicationsUsingPhysicalPath
+
 function Test-AppPoolExists {
   [CmdletBinding()]
   param(
@@ -252,6 +280,20 @@ function Publish-WebSite {
     #Validate the Physical Path
     if ($physicalPath -eq $null) { throw "Physical Path for site ($siteName) cannot be null" }
     if (-not(Test-DirectoryPath -Path $physicalPath)) { throw "Invalid directory path: $physicalPath"}
+
+    #Verify that no other sites are using the same physical path
+    $sitesUsingPhysicalPath = Get-WebSitesUsingPhysicalPath -PhysicalPath $physicalPath | Where-Object { $_.Name -ne $siteName}
+    if ($sitesUsingPhysicalPath.Count -gt 0) {
+      $sitelist = $sitesUsingPhysicalPath | Select-Object -Property Name | Format-List | Out-String
+      throw "There are other websites using the same physical path: $($sitelist)"
+    }
+
+    #Verify that no other web applications are using the same physical path
+    $webAppsUsingPhysicalPath = Get-WebApplicationsUsingPhysicalPath -PhysicalPath $physicalPath | Where-Object { $_.Name -ne $siteName}
+    if ($webAppsUsingPhysicalPath.Count -gt 0) {
+      $weblist = $webAppsUsingPhysicalPath | Select-Object -Property Name | Format-Hex
+      throw "There are other websites using the same physical path: $($weblist)"
+    }
 
     Write-Verbose "Stopping application pool ($appPool) for $siteName"
     Stop-WebApplicationPool -AppPoolName $appPool

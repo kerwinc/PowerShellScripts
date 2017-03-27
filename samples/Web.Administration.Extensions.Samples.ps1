@@ -28,7 +28,7 @@ $ErrorActionPreference = "Stop"
 # Write-Host "Deploying to Demo..." -ForegroundColor Green
 # Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\" -Verbose
 # Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "Default Web Site\demo" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
+# Publish-WebSite -SiteName "Default Web Site\FancyFancy" -SourceApplicationDirectoryPath "C:\Temp\WeBuild" -Verbose
 
 # Write-Host "Deploying to Demo..." -ForegroundColor Green
 # Backup-WebSite -SiteName "DontExist" -BackupDirectory "c:\backup" -Verbose
@@ -51,3 +51,6 @@ $ErrorActionPreference = "Stop"
 # Start-WebApplicationPool -AppPoolName "MyFancySite" -Verbose
 
 # Set-SitePhysicalPath -SiteName "MyFancySite2" -NewPhysicalPath "C:\inetpub\wwwroot\MyFancySite"
+# Get-WebSitesUsingPhysicalPath -PhysicalPath "C:\inetpub\wwwroot\MyFancySite"
+# Get-WebApplicationsUsingPhysicalPath -PhysicalPath "C:\inetpub\wwwroot\MyFancySite"
+# (Get-WebSitesUsingPhysicalPath -PhysicalPath "C:\inetpub\wwwroot\MyFancySite" | Where-Object { $_.Name -ne "MyFancySite"}).Count
