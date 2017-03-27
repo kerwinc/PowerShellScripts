@@ -23,7 +23,7 @@ $ErrorActionPreference = "Stop"
 
 # Write-Host "Deploying to MyFancySite..." -ForegroundColor Green
 # Backup-WebSite -SiteName "MyFancySite" -BackupDirectory "c:\backup" -Verbose
-# Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\web" -Verbose
+Publish-WebSite -SiteName "MyFancySite" -SourceApplicationDirectoryPath "C:\Temp\web" -Verbose
 
 # Write-Host "Deploying to Demo..." -ForegroundColor Green
 # Backup-WebSite -SiteName "Default Web Site\demo" -BackupDirectory "c:\" -Verbose

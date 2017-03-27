@@ -176,6 +176,7 @@ function Remove-DirectoryContents {
   Process {
     if ((Test-DirectoryPath -Path $Path)) {
       Write-Verbose "Removing all items from $Path"
+      Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force -WhatIf
       Get-ChildItem -LiteralPath $Path | Remove-Item -Recurse -Force
     }
     else {
